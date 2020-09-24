@@ -1,8 +1,5 @@
 """
 Build XGBoost at k locations 
-
-Author: Xinyan Li
-
 """
 
 import numpy as np
