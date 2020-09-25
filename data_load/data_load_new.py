@@ -14,6 +14,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 
+
 def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
     """
     get the covariate for one year
@@ -77,7 +78,6 @@ class DataLoader(object):
         self.pacific_atlantic = args.pacific_atlantic
         self.spatial_set = args.spatial_set
         self.temporal_set = args.temporal_set
-        
 
         self.train_date_start = args.train_start_date
 #        self.test_date_start= args.test_start_date
@@ -104,14 +104,13 @@ class DataLoader(object):
                                'nino3': 'nino3.h5',
                                'nino4': 'nino4.h5',
                                'nino1+2': 'nino1+2.h5',
-                               'nino3.4': 'nino3.4.h5'
-    }
+                               'nino3.4': 'nino3.4.h5'}
 
         # self._check_params()
 
 # Overall procedure
 # step 1: parameter Check
-# SH: need to do more boundary check for input parameters
+# need to do more boundary check for input parameters
 # step 2: load data
 # (1) get the target variables
 
@@ -140,7 +139,7 @@ class DataLoader(object):
                 target = target.rename(columns={target.columns[-1]: variable_id})
             else:
                 # start year
-                file_name = path+variable_id + '.' + str(train_date_start.year) + '.h5'
+                file_name = path + variable_id + '.' + str(train_date_start.year) + '.h5'
                 target_file = pd.read_hdf(file_name)
                 date_index = pd.date_range(start=train_date_start, end=pd.Timestamp(train_date_start.year, 12, 31))
                 target_start = target_file.loc[target_lat, target_lon, date_index]
@@ -151,8 +150,8 @@ class DataLoader(object):
                 date_index = pd.date_range(start=pd.Timestamp(target_end_date.year, 1, 1), end=target_end_date)
                 target_end = target_file.loc[target_lat, target_lon, date_index]
                 target_end = target_end.to_frame()
-                if target_end_date.year-train_date_start.year > 1:
-                    for year in range(train_date_start.year+1, target_end_date.year):
+                if target_end_date.year - train_date_start.year > 1:
+                    for year in range(train_date_start.year + 1, target_end_date.year):
                         file_name = path + variable_id + '.' + str(year) + '.h5'
                         target_file = pd.read_hdf(file_name)
                         date_index = pd.date_range(start=pd.Timestamp(year, 1, 1), end=pd.Timestamp(year, 12, 31))
@@ -177,10 +176,10 @@ class DataLoader(object):
         """
             find the cloest lat/lon for our resolution with the given lat/lon
         """
-        if lat > math.floor(lat)+0.5:
-            lat_min = math.floor(lat)+0.75
+        if lat > math.floor(lat) + 0.5:
+            lat_min = math.floor(lat) + 0.75
         else:
-            lat_min = math.floor(lat)+0.25
+            lat_min = math.floor(lat) + 0.25
         return lat_min
 
     def get_spatial_range(self, lat_range, lon_range):
@@ -190,16 +189,16 @@ class DataLoader(object):
         # get latitude range
         lat_min = self.find_the_cloest_value(min(lat_range))
         lat_max = self.find_the_cloest_value(max(lat_range))
-        lat_index = np.arange(lat_min, lat_max+0.5, 0.5)
+        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
         # get longtitude range
         if lon_range[0] <= lon_range[1]:
             lon_min = self.find_the_cloest_value(lon_range[0])
             lon_max = self.find_the_cloest_value(lon_range[1])
-            lon_index = np.arange(lon_min, lon_max+0.5, 0.5)
+            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
         else:
             lon_min = self.find_the_cloest_value(lon_range[1])
             lon_max = self.find_the_cloest_value(lon_range[0])
-            lon_index = np.concatenate((np.arange(0.25, lon_min+0.5, 0.5), np.arange(lon_max, 360.25, 0.5)), axis=None)
+            lon_index = np.concatenate((np.arange(0.25, lon_min + 0.5, 0.5), np.arange(lon_max, 360.25, 0.5)), axis=None)
         # get date range
         # date_index=pd.date_range(start=start_date,end=end_date)
         return lat_index, lon_index
@@ -217,7 +216,7 @@ class DataLoader(object):
             # the range after remove non-land area
             spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
         elif mask_area == 'ocean':
-            mask_df = pd.read_hdf(path+'sst_mask.h5')
+            mask_df = pd.read_hdf(path + 'sst_mask.h5')
             spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
         else:
             print('no mask is applied')
@@ -241,8 +240,8 @@ class DataLoader(object):
             df = data_augmentation_one_year(train_date_index, covariate_set, spatial_range, path)
         else:
             train_date_index = [(train_date_start, pd.Timestamp(train_date_start.year, 12, 31))]
-            if (target_end_date.year-train_date_start.year) > 1:
-                for year in range(train_date_start.year+1, target_end_date.year):
+            if (target_end_date.year - train_date_start.year) > 1:
+                for year in range(train_date_start.year + 1, target_end_date.year):
                     train_date_index.append((pd.Timestamp(year, 1, 1), pd.Timestamp(year, 12, 31)))
             train_date_index.append((pd.Timestamp(target_end_date.year, 1, 1), target_end_date))
             results = Parallel(n_jobs=8)(delayed(data_augmentation_one_year)(train_date_temp, covariate_set, spatial_range, path) for train_date_temp in train_date_index)
@@ -266,16 +265,16 @@ class DataLoader(object):
         """
         lat_min = self.find_the_cloest_value(min(lat_range))
         lat_max = self.find_the_cloest_value(max(lat_range))
-        lat_index = np.arange(lat_min, lat_max+0.5, 0.5)
+        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
         # get longtitude range
         if lon_range[0] <= lon_range[1]:
             lon_min = self.find_the_cloest_value(lon_range[0])
             lon_max = self.find_the_cloest_value(lon_range[1])
-            lon_index = np.arange(lon_min, lon_max+0.5, 0.5)
+            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
         else:
             lon_min = self.find_the_cloest_value(lon_range[1])
             lon_max = self.find_the_cloest_value(lon_range[0])
-            lon_index = chain(np.arange(0, lon_min+0.5, 0.5), np.arange(lon_max, 359.75))
+            lon_index = chain(np.arange(0, lon_min + 0.5, 0.5), np.arange(lon_max, 359.75))
 
         return data.loc[lat_index, lon_index]  # the way to slice the data can be improved
 
@@ -340,19 +339,19 @@ class DataLoader(object):
             if operation == "sum":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date + pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[date_start:date_end].values
                     target_df.loc[date_start] = np.sum(temp, axis=0)
             elif operation == "mean":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date + pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[date_start: date_end].values
                     target_df.loc[date_start] = np.mean(temp, axis=0)
             elif operation == "median":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date + pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[date_start:date_end].values
                     target_df.loc[date_start] = np.median(temp, axis=0)
             target_df.loc[date_list[num_date]:date_list[-1]] = float('nan')
@@ -370,19 +369,19 @@ class DataLoader(object):
             if operation == "sum":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date + pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[idx[target_lat, target_lon, date_start:date_end], :].values
                     target_df.loc[idx[target_lat, target_lon, date_start], :] = sum(temp)
             elif operation == "mean":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date + pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[idx[target_lat, target_lon, date_start:date_end], :].values
                     target_df.loc[idx[target_lat, target_lon, date_start], :] = np.mean(temp)
             elif operation == "median":
                 for date in date_list[:num_date]:
                     date_start = date
-                    date_end = date+pd.DateOffset(forecast_range-1)
+                    date_end = date + pd.DateOffset(forecast_range - 1)
                     temp = target_df.loc[idx[target_lat, target_lon, date_start:date_end], :].values
                     target_df.loc[idx[target_lat, target_lon, date_start], :] = np.median(temp)
             target_df.loc[idx[target_lat, target_lon, date_list[num_date]:date_list[-1]], :] = float('nan')
@@ -393,7 +392,7 @@ class DataLoader(object):
     def date_adapt_target(self, train_date_start, test_end_date, shift_days, forecast_range):
         data_start_date = pd.Timestamp(train_date_start)
         data_end_date = pd.Timestamp(test_end_date)
-        data_end_date = data_end_date + pd.DateOffset(days=shift_days+forecast_range-1)
+        data_end_date = data_end_date + pd.DateOffset(days=shift_days + forecast_range - 1)
         return data_start_date, data_end_date
 
 # (6) Combination of all operations
@@ -430,7 +429,7 @@ class DataLoader(object):
         else:
             covariates_us = None
         toc = timeit.default_timer()
-        print(toc-tic)
+        print(toc - tic)
         print('load data for global scale')
         tic = timeit.default_timer()
         if len(self.covariate_set_global) > 0:
@@ -441,7 +440,7 @@ class DataLoader(object):
         else:
             covariates_global = None
         toc = timeit.default_timer()
-        print(toc-tic)
+        print(toc - tic)
 
 # get spatial-temporal covariates on sea
         print('load data for ocean')
