@@ -92,7 +92,7 @@ class ReluNet(nn.Module):
                 break
             
 
-    def fit_cv(self, train_loader, val_src,val_trg, device):
+    def fit_cv(self, train_loader, val_src, val_trg, device):
         """ Fit function for hyper-parameter tuning
         """
 
