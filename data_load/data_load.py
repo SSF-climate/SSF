@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# from datetime import datetime
-# from datetime import timedelta
+from joblib import Parallel, delayed
 import math
 import timeit
-# from itertools import chain
-# from functools import partial
-# from multiprocessing import Pool
-# import xarray as xr
-from joblib import Parallel, delayed
-# args = config.parse_command_line_arguments()
 import numpy as np
 import pandas as pd
 
@@ -278,6 +271,18 @@ class DataLoader(object):
 
         return data.loc[lat_index, lon_index]  # the way to slice the data can be improved
 
+    def split_pacific_atlantic(self, rootpath, covariates_sea):
+        atlantic_mask = pd.read_hdf(rootpath + 'atlantic_mask.h5')
+        pacific_mask = pd.read_hdf(rootpath + 'pacific_mask.h5')
+        covariates_sea_temp = covariates_sea.reset_index()
+        covariates_sea_pacific = pacific_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
+        covariates_sea_pacific.set_index(['lat', 'lon', 'start_date'], inplace=True)
+        covariates_sea_pacific.sort_index(ascending=True, inplace=True)
+        covariates_sea_atlantic = atlantic_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
+        covariates_sea_atlantic.set_index(['lat', 'lon', 'start_date'], inplace=True)
+        covariates_sea_atlantic.sort_index(ascending=True, inplace=True)
+        return covariates_sea_pacific, covariates_sea_atlantic
+
 # (4) create a data frame
     def create_date_data(self, covariates_set, start_date, end_date, path):
         """
@@ -450,15 +455,7 @@ class DataLoader(object):
             # covariates_sea is not sorted, add following
             covariates_sea.sort_index(ascending=True, inplace=True)
             if self.pacific_atlantic is True:
-                atlantic_mask = pd.read_hdf(self.path + 'atlantic_mask.h5')
-                pacific_mask = pd.read_hdf(self.path + 'pacific_mask.h5')
-                covariates_sea_temp = covariates_sea.reset_index()
-                covariates_sea_pacific = pacific_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
-                covariates_sea_pacific.set_index(['lat', 'lon', 'start_date'], inplace=True)
-                covariates_sea_pacific.sort_index(ascending=True, inplace=True)
-                covariates_sea_atlantic = atlantic_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
-                covariates_sea_atlantic.set_index(['lat', 'lon', 'start_date'], inplace=True)
-                covariates_sea_atlantic.sort_index(ascending=True, inplace=True)
+                covariates_sea_pacific, covariates_sea_atlantic = split_pacific_atlantic(self.path, covariates_sea)
                 if self.save_cov is True:
                     covariates_sea_pacific.to_hdf('covariates_pacific.h5', key='covariates_pacific', mode='w')
                     covariates_sea_atlantic.to_hdf('covariates_atlantic.h5', key='covariates_atlantic', mode='w')
@@ -487,11 +484,4 @@ class DataLoader(object):
                 temporal_covariates.to_hdf('temporal_covariates.h5', key='temporal_covariates', mode='w')
         else:
             temporal_covariates = None
-
-#        if self.save_cov is True:
-#            covariates_us.to_hdf('covariates_us.h5', key='covariates_us', mode='w')
-#            covariates_global.to_hdf('covariates_global.h5', key='covariates_global', mode='w')
-#            covariates_sea.to_hdf('covariates_sea.h5', key='covariates_sea', mode='w')
-#            spatial_covariates.to_hdf('spatial_covariates.h5', key='spatial_covariates', mode='w')
-#            temporal_covariates.to_hdf('temporal_covariates.h5', key='temporal_covariates', mode='w')
         return covariates_us, covariates_sea, covariates_global, spatial_covariates, temporal_covariates
