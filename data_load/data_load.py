@@ -9,8 +9,17 @@ import pandas as pd
 
 
 def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
-    """
-    get the covariate for one year
+    """Create a dataframe of all variables in covariate_set within the required
+    saptial and temporal range (within one year)
+
+    Args:
+        train_date: a tuple as (start_date, end_date)
+        covariate_set: a list of climate variables
+        spatial_range: a dataframe with required latitude and longtitude
+        path: the rootpath for reading the raw data of each climate variable
+
+    Returns:
+        A multiindex dataframe with requested cliamte variables
     """
     # idx = pd.IndexSlice
     # date_index=pd.date_range(start=train_date[0],end=train_date[1])
@@ -28,9 +37,6 @@ def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
         cov_temp = cov_file.reset_index()
         cov_temp = date_index.merge(cov_temp, on=['start_date'])
         df = cov_temp.merge(spatial_range, on=['lat', 'lon'])
-#        cov_temp=cov_file.to_frame()
-#        cov_temp=cov_temp.loc[idx[:,:,date_index],:]
-#        df=cov_temp.reset_index().merge(spatial_range,on=['lat','lon']).set_index(['lat','lon','start_date'])
     df = df.rename(columns={df.columns[-1]: cov})
     if len(cov) > 1:
         for cov in covariate_set[1:]:
@@ -46,7 +52,7 @@ def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
 
 class DataLoader(object):
     """
-    Download data and split it to multiple training and validation sets
+    Download requested cliamte variables and created dataframe for target variable and covariates
     """
     def __init__(self, args):
         self.path = args.path
@@ -73,12 +79,10 @@ class DataLoader(object):
         self.temporal_set = args.temporal_set
 
         self.train_date_start = args.train_start_date
-#        self.test_date_start= args.test_start_date
         self.date_end = args.end_date
         self.past_ndays = args.past_ndays
         self.future_mdays = args.future_mdays
         self.past_kyears = args.past_kyears
-        # SH: Shall we convert to years? Leap years are kinda problemic.
         self.train_size = args.train_range  # days
         self.validation_size = args.val_range  # days
         self.stride = args.stride
@@ -87,7 +91,7 @@ class DataLoader(object):
         self.shift_days = args.shift_days
         self.forecast_range = args.forecast_range
         self.operation = args.operation  # or "mean"
-        # do we need a separate function for defining the dictionary
+        # a dictionary with file names for all temporal/saptial climate variable
         self.variables_file = {'mei': 'mei.h5',
                                'mjo_phase': 'mjo_phase.h5',
                                'mjo_amplitude': 'mjo_amplitude.h5',
@@ -99,17 +103,23 @@ class DataLoader(object):
                                'nino1+2': 'nino1+2.h5',
                                'nino3.4': 'nino3.4.h5'}
 
-        # self._check_params()
+        # self._check_params() # need to add a function to check the input arguments
 
 # Overall procedure
-# step 1: parameter Check
-# need to do more boundary check for input parameters
-# step 2: load data
 # (1) get the target variables
 
     def get_target_data(self, variable_id, target_lat, target_lon, train_date_start, target_end_date, resolution, path):
-        """
-            Get the target variables with the required lat, lon, date
+        """Get the target variables with the required lat, lon, date
+
+        Args:
+            variable_id: a string of target variable ('tmp2m' or 'precip')
+            target_lat, target_lon: a list of the latitude/longtitude range
+            train_date_start, target_end_date: Timestamp represent the start and end date for target variable
+            resolution: an int represent the resolution (2)
+            path: the rootpath for reading the raw data
+
+        Returns:
+            A multiindex dataframe containing target variable
         """
         if type(target_lat) is list and type(target_lon) is list:
             # this part need to be improved
@@ -156,6 +166,14 @@ class DataLoader(object):
             return target
 
     def get_target_map(self, resolution, path):
+        '''Get a DataFrame with spatial range of a target variable
+
+        Args:
+            resolution: an int represent the resolution (2)
+            path: the rootpath for reading the raw data
+        Returns:
+            a DataFrame with spatial range (lat and lon) of a target variable
+        '''
         if resolution == 2:
             # subsample the map with the resolution as 2x2 for target variables
             spatial_map = pd.read_hdf(path + 'target_map_2.h5')
@@ -163,176 +181,18 @@ class DataLoader(object):
         else:
             print('the spatial map for resolution as {} is not available'.format(resolution))
 
-# (3) common functions
-
-    def find_the_cloest_value(self, lat):
-        """
-            find the cloest lat/lon for our resolution with the given lat/lon
-        """
-        if lat > math.floor(lat) + 0.5:
-            lat_min = math.floor(lat) + 0.75
-        else:
-            lat_min = math.floor(lat) + 0.25
-        return lat_min
-
-    def get_spatial_range(self, lat_range, lon_range):
-        """
-            Get the subset data for each covariate based on the required spatial and temporal range
-        """
-        # get latitude range
-        lat_min = self.find_the_cloest_value(min(lat_range))
-        lat_max = self.find_the_cloest_value(max(lat_range))
-        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
-        # get longtitude range
-        if lon_range[0] <= lon_range[1]:
-            lon_min = self.find_the_cloest_value(lon_range[0])
-            lon_max = self.find_the_cloest_value(lon_range[1])
-            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
-        else:
-            lon_min = self.find_the_cloest_value(lon_range[1])
-            lon_max = self.find_the_cloest_value(lon_range[0])
-            lon_index = np.concatenate((np.arange(0.25, lon_min + 0.5, 0.5), np.arange(lon_max, 360.25, 0.5)), axis=None)
-        # get date range
-        # date_index=pd.date_range(start=start_date,end=end_date)
-        return lat_index, lon_index
-
-    def remove_masked_data(self, mask_area, lat_range, lon_range, path):
-        """
-            get the spatial range for us land and ocean mask
-        """
-        lat_index, lon_index = self.get_spatial_range(lat_range, lon_range)
-        lon, lat = np.meshgrid(lon_index, lat_index)
-        # the given block range
-        spatial_range = pd.DataFrame({'lat': lat.flatten(), 'lon': lon.flatten()})
-        if mask_area == 'us':
-            mask_df = pd.read_hdf(path + 'us_mask.h5')
-            # the range after remove non-land area
-            spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
-        elif mask_area == 'ocean':
-            mask_df = pd.read_hdf(path + 'sst_mask.h5')
-            spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
-        else:
-            print('no mask is applied')
-        return spatial_range
-
-    def get_data_file(self, variable_id, path):
-        """
-        Get the correspoding data file from each variable's name
-        """
-        file_name = path + self.variables_file[variable_id]
-        return pd.read_hdf(file_name)
-
-# (2) get the cov variables
-
-    def get_covariates_data_parallel_updated(self, train_date_start, target_end_date, covariate_set, spatial_range, path):
-        """
-        get the covariate with the required range
-        """
-        if train_date_start.year == target_end_date.year:
-            train_date_index = (train_date_start, target_end_date)
-            df = data_augmentation_one_year(train_date_index, covariate_set, spatial_range, path)
-        else:
-            train_date_index = [(train_date_start, pd.Timestamp(train_date_start.year, 12, 31))]
-            if (target_end_date.year - train_date_start.year) > 1:
-                for year in range(train_date_start.year + 1, target_end_date.year):
-                    train_date_index.append((pd.Timestamp(year, 1, 1), pd.Timestamp(year, 12, 31)))
-            train_date_index.append((pd.Timestamp(target_end_date.year, 1, 1), target_end_date))
-            results = Parallel(n_jobs=8)(delayed(data_augmentation_one_year)(train_date_temp, covariate_set, spatial_range, path) for train_date_temp in train_date_index)
-            df = pd.concat(results)
-        df.sort_index(ascending=True, inplace=True)
-        return df
-
-    def get_temporal_subset(self, data, start_date, end_date):
-        """
-            Get the subset data for each covariate based on the required temporal range
-        """
-        date_index = pd.date_range(start=start_date, end=end_date)
-        date_index = pd.DataFrame(date_index, columns=['start_date'])
-        data_temp = data.reset_index()
-        data_subset = date_index.merge(data_temp, on=['start_date'])
-        return data_subset
-
-    def get_spatial_subset(self, data, lat_range, lon_range):
-        """
-            Get the subset data for each covariate based on the required spatial range
-        """
-        lat_min = self.find_the_cloest_value(min(lat_range))
-        lat_max = self.find_the_cloest_value(max(lat_range))
-        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
-        # get longtitude range
-        if lon_range[0] <= lon_range[1]:
-            lon_min = self.find_the_cloest_value(lon_range[0])
-            lon_max = self.find_the_cloest_value(lon_range[1])
-            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
-        else:
-            lon_min = self.find_the_cloest_value(lon_range[1])
-            lon_max = self.find_the_cloest_value(lon_range[0])
-            lon_index = chain(np.arange(0, lon_min + 0.5, 0.5), np.arange(lon_max, 359.75))
-
-        return data.loc[lat_index, lon_index]  # the way to slice the data can be improved
-
-    def split_pacific_atlantic(self, rootpath, covariates_sea):
-        atlantic_mask = pd.read_hdf(rootpath + 'atlantic_mask.h5')
-        pacific_mask = pd.read_hdf(rootpath + 'pacific_mask.h5')
-        covariates_sea_temp = covariates_sea.reset_index()
-        covariates_sea_pacific = pacific_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
-        covariates_sea_pacific.set_index(['lat', 'lon', 'start_date'], inplace=True)
-        covariates_sea_pacific.sort_index(ascending=True, inplace=True)
-        covariates_sea_atlantic = atlantic_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
-        covariates_sea_atlantic.set_index(['lat', 'lon', 'start_date'], inplace=True)
-        covariates_sea_atlantic.sort_index(ascending=True, inplace=True)
-        return covariates_sea_pacific, covariates_sea_atlantic
-
-# (4) create a data frame
-    def create_date_data(self, covariates_set, start_date, end_date, path):
-        """
-            Create a dataframe for all temporal covariates
-        """
-        cov_id = covariates_set[0]
-        cov_file = self.get_data_file(cov_id, path)
-        cov = self.get_temporal_subset(cov_file, start_date, end_date)
-        cov = cov.rename(columns={cov.columns[-1]: cov_id})
-        if len(covariates_set) > 1:
-            covariates_set = covariates_set[1:]
-            for cov_id in covariates_set:
-                cov_file = self.get_data_file(cov_id, path)
-                cov_subset = self.get_temporal_subset(cov_file, start_date, end_date)
-                cov_temp = pd.DataFrame(cov_subset)
-                cov_temp = cov_temp.rename(columns={cov_temp.columns[-1]: cov_id})
-                cov = pd.merge(cov, cov_temp, on=["start_date"], how="left")
-        cov = cov.set_index(['start_date'])  # convert date information to index
-        return cov
-
-    def create_lat_lon_data(self, covariates_set, lat_range, lon_range, path):
-        """
-            Create a dataframe for all temporal covariates
-        """
-        cov_id = covariates_set[0]
-        cov_file = self.get_data_file(cov_id, path)
-        cov_subset = self.get_spatial_subset(cov_file, lat_range, lon_range)
-        cov = pd.DataFrame(cov_subset)
-        cov.reset_index(inplace=True)
-        cov = cov.rename(columns={cov.columns[-1]: cov_id})
-        if len(covariates_set) > 1:
-            covariates_set = covariates_set[1:]
-            for cov_id in covariates_set:
-                cov_file = self.get_data_file(cov_id, path)
-                cov_subset = self.get_spatial_subset(cov_file, lat_range, lon_range)
-                cov_temp = pd.DataFrame(cov_subset)
-                cov_temp = cov_temp.rename(columns={cov_temp.columns[-1]: cov_id})
-                cov = pd.merge(cov, cov_temp, on=["lat", "lon"], how="left")
-        return cov
-
-    def date_adapt(self, train_date_start, test_end_date, past_kyears, past_ndays):
-        data_start_date = pd.Timestamp(train_date_start)
-        data_start_date = data_start_date - pd.DateOffset(years=past_kyears, days=past_ndays)
-        data_end_date = pd.Timestamp(test_end_date)
-        # data_end_date = data_end_date + pd.DateOffset(days=shift_days+forecast_range-1)
-        return data_start_date, data_end_date
-
     def shift_target(self, target_df, target_lat, target_lon, target_id, shift_days, forecast_range, operation):
-        """
-            shift the target variable add compute summation or average values for the required forecast_range
+        """Shift the target variable add compute summation or average values for the required forecast_range
+        Args:
+            target_df: a DataFrame with target variable
+            target_lat, target_lon: a list of the latitude/longtitude range
+            target_id: a string of target variable ('tmp2m' or 'precip')
+            shift_days: number of days by which the target variable should be shifted forward (14 for 2 weeks and 28 for 4 weeks)
+            forecast_range: number of days by which the target variable should be aggreated (14 for 2 weeks and 28 for 4 weeks)
+            operation: the operation for aggreating the target variable over forecasting range ('sum', 'mean', or 'median')
+        Returns:
+            A DataFrame with shifted and aggreated target variables
+            (e.g. if shift_days = 14 and forecast_range =14, it returns the target variable needed for forecasting week 3 and 4)
         """
         if type(target_lat) is list and type(target_lon) is list:
             idx = pd.IndexSlice
@@ -395,14 +255,252 @@ class DataLoader(object):
             return target_df.to_frame()
 
     def date_adapt_target(self, train_date_start, test_end_date, shift_days, forecast_range):
+        '''Returns the date range to obtain to compute the target variable over the given temporal range
+        e.g. need (shift_days + forecast_range) more days compared to the end date
+        Args:
+            train_date_start, target_end_date: Timestamp represent the start and end date for target variable
+            shift_days: number of days by which the target variable should be shifted forward (14 for 2 weeks and 28 for 4 weeks)
+            forecast_range: number of days by which the target variable should be aggreated (14 for 2 weeks and 28 for 4 weeks)
+        Returns:
+            data_start_date, data_end_date: timestamps represent the temporal boundary to obtain
+        '''
         data_start_date = pd.Timestamp(train_date_start)
         data_end_date = pd.Timestamp(test_end_date)
         data_end_date = data_end_date + pd.DateOffset(days=shift_days + forecast_range - 1)
         return data_start_date, data_end_date
 
-# (6) Combination of all operations
+# (2) common functions
+
+    def find_the_cloest_value(self, lat):
+        """Find the cloest lat/lon for the resolution as 0.5 x 0.5 with the given lat/lon
+
+        Args:
+            lat: a value represent either lat or lon
+
+        Returns:
+            a value with in the lat/lon grid given the resoluion as 0.5 x 0.5
+        """
+        if lat > math.floor(lat) + 0.5:
+            lat_min = math.floor(lat) + 0.75
+        else:
+            lat_min = math.floor(lat) + 0.25
+        return lat_min
+
+    def get_spatial_range(self, lat_range, lon_range):
+        """Get a range of latitude and longtitude given the boundary
+
+        Args:
+            lat_range/lon_range: a list of the boundary of latitude and longtitude
+        Returns:
+            lat_index, lon_index: the range of latitude and longtitude given the boundary
+        """
+        # get latitude range
+        lat_min = self.find_the_cloest_value(min(lat_range))
+        lat_max = self.find_the_cloest_value(max(lat_range))
+        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
+        # get longtitude range
+        if lon_range[0] <= lon_range[1]:
+            lon_min = self.find_the_cloest_value(lon_range[0])
+            lon_max = self.find_the_cloest_value(lon_range[1])
+            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
+        else:
+            lon_min = self.find_the_cloest_value(lon_range[1])
+            lon_max = self.find_the_cloest_value(lon_range[0])
+            lon_index = np.concatenate((np.arange(0.25, lon_min + 0.5, 0.5), np.arange(lon_max, 360.25, 0.5)), axis=None)
+        return lat_index, lon_index
+
+    def remove_masked_data(self, mask_area, lat_range, lon_range, path):
+        """Get the spatial range of a sepecif area within the given the requested lat/lon range
+
+        Args:
+            mask_area: the name of the mask area ('us', 'ocean' or 'global')
+            (the mask area is the area left - may need to change the name)
+            lat_range/lon_range: a list of the boundary of latitude and longtitude
+            path: the rootpath for reading the raw data
+
+        Returns:
+            A dataframe with latitude and longtitude of a sepecif area within the given the requested lat/lon range
+        """
+        lat_index, lon_index = self.get_spatial_range(lat_range, lon_range)
+        lon, lat = np.meshgrid(lon_index, lat_index)
+        # the given block range
+        spatial_range = pd.DataFrame({'lat': lat.flatten(), 'lon': lon.flatten()})
+        if mask_area == 'us':
+            mask_df = pd.read_hdf(path + 'us_mask.h5')
+            # the range after remove non-land area
+            spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
+        elif mask_area == 'ocean':
+            mask_df = pd.read_hdf(path + 'sst_mask.h5')
+            spatial_range = pd.merge(spatial_range, mask_df, on=['lat', 'lon'], how='inner')
+        else:
+            print('no mask is applied')
+        return spatial_range
+
+    def get_data_file(self, variable_id, path):
+        """Get the correspoding data file from each variable's name (only for temporal and saptial variables)
+        Args:
+            variable_id: a string of a spatial or temporal variable ('mei', 'elevation', etc)
+        Returns:
+            A dataframe of the required cliamte variable
+            path: the rootpath for reading the raw data
+        """
+        file_name = path + self.variables_file[variable_id]
+        return pd.read_hdf(file_name)
+
+# (3) functions for geting the cov variables
+
+    def get_covariates_data_parallel_updated(self, train_date_start, target_end_date, covariate_set, spatial_range, path):
+        """Get the covariate with the required range
+        Args:
+            train_date_start, target_end_date: Timestamp represent the start and end date for covariates
+            covariate_set: a list of climate variables
+            spatial_range: a dataframe with required latitude and longtitude
+            path: the rootpath for reading the raw data of each climate variable
+
+        Returns:
+            A multiindex dataframe with requested cliamte variables
+
+        """
+        if train_date_start.year == target_end_date.year:
+            train_date_index = (train_date_start, target_end_date)
+            df = data_augmentation_one_year(train_date_index, covariate_set, spatial_range, path)
+        else:
+            train_date_index = [(train_date_start, pd.Timestamp(train_date_start.year, 12, 31))]
+            if (target_end_date.year - train_date_start.year) > 1:
+                for year in range(train_date_start.year + 1, target_end_date.year):
+                    train_date_index.append((pd.Timestamp(year, 1, 1), pd.Timestamp(year, 12, 31)))
+            train_date_index.append((pd.Timestamp(target_end_date.year, 1, 1), target_end_date))
+            results = Parallel(n_jobs=8)(delayed(data_augmentation_one_year)(train_date_temp, covariate_set, spatial_range, path) for train_date_temp in train_date_index)
+            df = pd.concat(results)
+        df.sort_index(ascending=True, inplace=True)
+        return df
+
+    def get_temporal_subset(self, data, start_date, end_date):
+        """Get the subset data for each temporal covariate based on the required temporal range
+        Args:
+            data: A DataFrame with a temporal climate variable
+            start_date/end_date: the timestamp of the start and end date for the required temporal range
+        Returns:
+            A DataFrame of a temporal varialbe with the required temporal range
+        """
+        date_index = pd.date_range(start=start_date, end=end_date)
+        date_index = pd.DataFrame(date_index, columns=['start_date'])
+        data_temp = data.reset_index()
+        data_subset = date_index.merge(data_temp, on=['start_date'])
+        return data_subset
+
+    def get_spatial_subset(self, data, lat_range, lon_range):
+        """Get the subset data for each covariate based on the required spatial range
+        Args:
+            data: A DataFrame with a temporal climate variable
+            lat_range/lon_range: lat_range/lon_range: a list of the boundary of latitude and longtitude
+        Returns:
+        A DataFrame of a spatial varialbe with the required spatial range
+        """
+        lat_min = self.find_the_cloest_value(min(lat_range))
+        lat_max = self.find_the_cloest_value(max(lat_range))
+        lat_index = np.arange(lat_min, lat_max + 0.5, 0.5)
+        # get longtitude range
+        if lon_range[0] <= lon_range[1]:
+            lon_min = self.find_the_cloest_value(lon_range[0])
+            lon_max = self.find_the_cloest_value(lon_range[1])
+            lon_index = np.arange(lon_min, lon_max + 0.5, 0.5)
+        else:
+            lon_min = self.find_the_cloest_value(lon_range[1])
+            lon_max = self.find_the_cloest_value(lon_range[0])
+            lon_index = chain(np.arange(0, lon_min + 0.5, 0.5), np.arange(lon_max, 359.75))
+
+        return data.loc[lat_index, lon_index]  # the way to slice the data can be improved
+
+    def split_pacific_atlantic(self, rootpath, covariates_sea):
+        '''Split the covariates over sea to north pacific and north atlantic ocean
+        Args:
+            rootpath: the rootpath for reading the mask file
+            covariates_sea: a DataFrame with all covariates over sea
+        Returns:
+            covariates_sea_pacific, covariates_sea_atlantic: DataFrames with the covariates over north pacific ocean and north atlantic ocean
+        '''
+        atlantic_mask = pd.read_hdf(rootpath + 'atlantic_mask.h5')
+        pacific_mask = pd.read_hdf(rootpath + 'pacific_mask.h5')
+        covariates_sea_temp = covariates_sea.reset_index()
+        covariates_sea_pacific = pacific_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
+        covariates_sea_pacific.set_index(['lat', 'lon', 'start_date'], inplace=True)
+        covariates_sea_pacific.sort_index(ascending=True, inplace=True)
+        covariates_sea_atlantic = atlantic_mask.merge(covariates_sea_temp, on=['lat', 'lon'], how='left')
+        covariates_sea_atlantic.set_index(['lat', 'lon', 'start_date'], inplace=True)
+        covariates_sea_atlantic.sort_index(ascending=True, inplace=True)
+        return covariates_sea_pacific, covariates_sea_atlantic
+
+    def date_adapt(self, train_date_start, test_end_date, past_kyears, past_ndays):
+        '''Returns the date range to obtain to create the feature set for all covariates
+        Args:
+            train_date_start, target_end_date: Timestamp represent the start and end date for covariates set
+            past_kyears: number of years by which the covariates should be shifted backward
+            past_ndays: number of days by which the covariates should be shifted backward
+        Returns:
+            data_start_date, data_end_date: the start and end date range to obtain to create the feature set for all covariates
+        '''
+        data_start_date = pd.Timestamp(train_date_start)
+        data_start_date = data_start_date - pd.DateOffset(years=past_kyears, days=past_ndays)
+        data_end_date = pd.Timestamp(test_end_date)
+        # data_end_date = data_end_date + pd.DateOffset(days=shift_days+forecast_range-1)
+        return data_start_date, data_end_date
+
+    def create_date_data(self, covariates_set, start_date, end_date, path):
+        """Create a dataframe for all temporal covariates
+        Args:
+            covariates_set: a list of temporal climate variables
+            start_date, end_date: timestamps represent the temporal boundary to obtain
+            path: the rootpath for reading the raw data
+        Returns:
+            A DataFrame with temporal covariates
+        """
+        cov_id = covariates_set[0]
+        cov_file = self.get_data_file(cov_id, path)
+        cov = self.get_temporal_subset(cov_file, start_date, end_date)
+        cov = cov.rename(columns={cov.columns[-1]: cov_id})
+        if len(covariates_set) > 1:
+            covariates_set = covariates_set[1:]
+            for cov_id in covariates_set:
+                cov_file = self.get_data_file(cov_id, path)
+                cov_subset = self.get_temporal_subset(cov_file, start_date, end_date)
+                cov_temp = pd.DataFrame(cov_subset)
+                cov_temp = cov_temp.rename(columns={cov_temp.columns[-1]: cov_id})
+                cov = pd.merge(cov, cov_temp, on=["start_date"], how="left")
+        cov = cov.set_index(['start_date'])  # convert date information to index
+        return cov
+
+    def create_lat_lon_data(self, covariates_set, lat_range, lon_range, path):
+        """Create a dataframe for all spatial covariates
+        Args:
+            covariates_set: a list of spatial climate variables
+            lat_range/lon_range: a list of the boundary of latitude and longtitude
+            path: the rootpath for reading the raw data
+        Returns:
+            A DataFrame with spatial covariates
+        """
+        cov_id = covariates_set[0]
+        cov_file = self.get_data_file(cov_id, path)
+        cov_subset = self.get_spatial_subset(cov_file, lat_range, lon_range)
+        cov = pd.DataFrame(cov_subset)
+        cov.reset_index(inplace=True)
+        cov = cov.rename(columns={cov.columns[-1]: cov_id})
+        if len(covariates_set) > 1:
+            covariates_set = covariates_set[1:]
+            for cov_id in covariates_set:
+                cov_file = self.get_data_file(cov_id, path)
+                cov_subset = self.get_spatial_subset(cov_file, lat_range, lon_range)
+                cov_temp = pd.DataFrame(cov_subset)
+                cov_temp = cov_temp.rename(columns={cov_temp.columns[-1]: cov_id})
+                cov = pd.merge(cov, cov_temp, on=["lat", "lon"], how="left")
+        return cov
+# (4) Combination of all operations
 
     def data_download_target(self):
+        '''Load the target variable based on user's query
+        Returns:
+            A multiindex DataFrame with target variable
+        '''
         # add past years and days to the dataset
         print('compute the real date range considering shift and forecast range')
         train_date_start, target_end_date = self.date_adapt_target(self.train_date_start, self.date_end, self.shift_days, self.forecast_range)
@@ -411,9 +509,8 @@ class DataLoader(object):
         target = self.get_target_data(self.target_variable, self.target_lat, self.target_lon, train_date_start, target_end_date, self.target_res, self.path)
 #        print('shift and compute average for target')
         if self.shift_days > 0 or self.forecast_range > 0:
+            print('shift and compute average for target')
             target = self.shift_target(target, self.target_lat, self.target_lon, self.target_variable, self.shift_days, self.forecast_range, self.operation)
-
-        # get spatial-temporal covariates on land
 
         if self.save_target is True:
             target.to_hdf('target.h5', key='target', mode='w')
@@ -421,6 +518,11 @@ class DataLoader(object):
         return target
 
     def data_download_cov(self):
+        '''Load the covariates based on user's query
+        Returns:
+            Covariates_us, covariates_sea, covariates_global: multiindex DataFrames of spatial covariates over us mainland, ocean, and global range
+            Spatial_covariates, temporal_covariates: DataFrames with spatial and temporal variables
+        '''
         # add past years and days to the dataset
         train_date_start, target_end_date = self.date_adapt(self.train_date_start, self.date_end, self.past_kyears, self.past_ndays)
         # get spatial-temporal covariates on land
@@ -447,7 +549,7 @@ class DataLoader(object):
         toc = timeit.default_timer()
         print(toc - tic)
 
-# get spatial-temporal covariates on sea
+        # get spatial-temporal covariates on sea
         print('load data for ocean')
         if len(self.ocean_covariate_set) > 0:
             ocean_spatial_range = self.remove_masked_data('ocean', self.lat_range_sea, self.lon_range_sea, self.path)
@@ -479,7 +581,7 @@ class DataLoader(object):
         # get temporal covariates
         print('load temporal data')
         if len(self.temporal_set) > 0:
-            temporal_covariates = self.create_date_data(self.temporal_set, train_date_start, self.date_end, self.path)
+            temporal_covariates = self.create_date_data(self.temporal_set, train_date_start, target_end_date, self.path)
             if self.save_cov is True:
                 temporal_covariates.to_hdf('temporal_covariates.h5', key='temporal_covariates', mode='w')
         else:
