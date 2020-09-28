@@ -259,7 +259,7 @@ seed(314)
 #               'linear_dim': [50, 100, 200],
 #               'drop_out': [0.1, 0.2]}
 
-param_grid = cfg_target.param_grid_en_de
+param_grid = cfg_target.param_grid
 month_range = cfg_target.month_range
 val_years = cfg_target.val_years
 num_random = cfg_target.num_random
