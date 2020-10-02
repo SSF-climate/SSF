@@ -190,4 +190,16 @@ class CnnFnn(nn.Module):
 
 
 
+def get_input_dim(X, num_var, stride, kernel_size):
+    input_dim = 0
+    for i in range(num_var):
 
+        W = X[i].shape[-1]
+        H = X[i].shape[-2]
+
+        S = stride
+        K = kernel_size
+        
+        input_dim += (int((W-K)/S)+1)*(int((H-K)/S)+1)
+
+    return input_dim

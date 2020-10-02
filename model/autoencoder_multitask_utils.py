@@ -94,6 +94,24 @@ class MapDataset_ar(Dataset):
         return self.data[index], self.target[index], self.labels[index]
 
 
+class MapDataset_CNN(Dataset):
+  """
+  """
+  def __init__(self, X,y):
+      #print([X,y])
+        self.data = X
+        self.labels = y
+        self.num_var = len(X)
+        
+  def __len__(self):
+      return len(self.labels) # of how many examples(images?) you have
+
+  def __getitem__(self, index):
+      var = []
+      for i in range(self.num_var):
+          var.append(self.data[i][index])
+      return var,self.labels[index]
+      
 def init_weight(mdl):
 
     for name, param in mdl.named_parameters():

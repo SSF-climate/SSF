@@ -87,38 +87,6 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             seq_len = param_grid['seq_len']
             linear_dim = param_grid['linear_dim']
             drop_out = param_grid['drop_out']
-    elif model_name == 'XGBoost':
-        max_depth = param_grid['max_depth']
-        colsample_bytree = param_grid['colsample_bytree']
-        gamma = param_grid['gamma']
-        n_estimators = param_grid['n_estimators']
-        lr = param_grid['learning_rate']
-    elif model_name == 'Lasso':
-        alpha = param_grid['alpha']
-    elif model_name == 'FNN':
-        train_dataset = model.MapDataset(train_X, train_y)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
-        hidden_dim = param_grid['hidden_dim']
-        num_layers = param_grid['num_layers']
-    elif model_name == 'CNN_FNN':
-        train_dataset = model.MapDataset_CNN(train_X, train_y)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=50, shuffle=False)
-        stride = param_grid['stride']
-        kernel_size = param_grid['kernel_size']
-        hidden_dim = param_grid['hidden_dim']
-        num_layers = param_grid['num_layers']
-    elif model_name == 'CNN_LSTM':
-        train_dataset = model.MapDataset_CNN(train_X, train_y)
-        train_loader = DataLoader(dataset=train_dataset, batch_size=50, shuffle=False)
-        stride = param_grid['module__stride']
-        kernel_size = param_grid['module__kernel_size']
-        hidden_dim = param_grid['module__hidden_dim']
-        num_lstm_layers = param_grid['module__num_lstm_layers']
-        lr = param_grid['lr']
-        num_epochs = param_grid['module__num_epochs']
-    else:
-        print('the model name is not in the list')
-
     # set input and output dim
     input_dim = train_X.shape[-1]
     output_dim = train_y.shape[-1]
@@ -241,80 +209,9 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             # fit the model
             history = mdl.fit_cv(train_loader, valid_X, valid_y_ar, valid_y, device)
             pred_y = mdl.predict(valid_X, valid_y_ar, device)
-        elif model_name == 'XGBoost':
-            curr_max_depth = max_depth[randint(0, len(max_depth) - 1)]
-            curr_colsample_bytree = colsample_bytree[randint(0, len(colsample_bytree) - 1)]
-            curr_gamma = gamma[randint(0, len(gamma) - 1)]
-            curr_n_estimators = n_estimators[randint(0, len(n_estimators) - 1)]
-            curr_lr = lr[randint(0, len(lr) - 1)]
-            parameters = {'max_depth': curr_max_depth, 'colsample_bytree': curr_colsample_bytree,
-                          'gamma': curr_gamma, 'n_estimators': curr_n_estimators,
-                          'learning_rate': curr_lr}
-            parameter_all.append(parameters)
-            mdl = model.XGBMultitask(num_models=output_dim, colsample_bytree=curr_colsample_bytree,
-                                     gamma=curr_gamma, learning_rate=curr_lr, max_depth=curr_max_depth,
-                                     n_estimators=curr_n_estimators, objective='reg:squarederror')
-            # history = mdl.fit_cv(train_X, train_y, valid_X, valid_y)
-            model_fit = mdl.fit(train_X, train_y)
-            pred_y = model_fit.predict(valid_X)
-            history = None
-        elif model_name == 'Lasso':
-            curr_alpha = alphas[randint(0, len(alphas) - 1)]
-            parameter = {'alpha': curr_alpha}
-            parameter_all.append(parameter)
-            mdl = MultiTaskLasso(alpha=curr_alpha, fit_intercept=False)
-            model_fit = mdl.fit(train_X, train_y)
-            pred_y = model_fit.predict(valid_X)
-            history = None
-        elif model_name == 'FNN':
-            curr_hidden_dim = hidden_dim[randint(0, len(hidden_dim) - 1)]
-            curr_num_layers = num_layers[randint(0, len(num_layers) - 1)]
-            parameters = {'hidden_dim': curr_hidden_dim, 'num_layers': curr_num_layers}
-            parameter_all.append(parameters)
-            mdl = model.ReluNet(input_dim=input_dim, output_dim=output_dim,
-                                hidden_dim=curr_hidden_dim, num_layers=curr_num_layers,
-                                threshold=0.1, num_epochs=1000)
-            model.init_weight(mdl)
-            mdl.to(device)
-            history = mdl.fit_cv(train_loader, valid_X, valid_y, device)
-            pred_y = mdl.predict(valid_X, device)
-        elif model_name == 'CNN_FNN':
-            curr_stride = stride[randint(0, len(stride) - 1)]
-            curr_kernel_size = kernel_size[randint(0, len(kernel_size) - 1)]
-            curr_hidden_dim = hidden_dim[randint(0, len(hidden_dim) - 1)]
-            curr_num_layers = num_layers[randint(0, len(num_layers) - 1)]
-            parameters = {'stride': curr_stride, 'kernel_size': curr_kernel_size,
-                          'hidden_dim': curr_hidden_dim, 'num_layers': curr_num_layers}
-            parameter_all.append(parameters)
-            num_var = len(train_X)
-            input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
-            mdl = model.CNN_FNN(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
-                                stride=curr_stride, hidden_dim=curr_hidden_dim,
-                                num_layers=curr_num_layers, num_epochs=100)
-            mdl.to(device)
-            history = mdl.fit_cv(train_loader, valid_X, valid_y, device)
-            pred_y = mdl.predict(valid_X, device)
-        elif model_name == 'CNN_LSTM':
-            curr_stride = stride[randint(0, len(stride) - 1)]
-            curr_kernel_size = kernel_size[randint(0, len(kernel_size) - 1)]
-            curr_hidden_dim = hidden_dim[randint(0, len(hidden_dim) - 1)]
-            curr_num_layers = num_lstm_layers[randint(0, len(num_lstm_layers) - 1)]
-            curr_lr = lr[randint(0, len(lr) - 1)]
-            curr_num_epochs = num_epochs[randint(0, len(num_epochs) - 1)]
-            parameters = {'stride': curr_stride, 'kernel_size': curr_kernel_size, 'hidden_dim': curr_hidden_dim,
-                          'num_layers': curr_num_layers, 'learning_rate': curr_lr, 'num_epochs': curr_num_epochs}
-            parameter_all.append(parameters)
-            num_var = len(train_X)
-            input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
-            mdl = model.CNN_LSTM(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
-                                 stride=curr_stride, hidden_dim=curr_hidden_dim,
-                                 num_lstm_layers=curr_num_layers, num_epochs=curr_num_epochs,
-                                 learning_rate=curr_lr)
-            mdl.to(device)
-            history = mdl.fit_cv(train_loader, valid_X, valid_y, device)
-            pred_y = mdl.predict(valid_X, device)
 
         history_all.append(history)
+
         test_rmse = np.sqrt(((valid_y - pred_y)**2).mean())
         test_cos = np.asarray([compute_cosine(valid_y[i, :], pred_y[i, :]) for i in range(len(valid_y))]).mean()
         score.append([test_rmse, test_cos])
