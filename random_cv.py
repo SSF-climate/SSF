@@ -255,16 +255,16 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
                                      gamma=curr_gamma, learning_rate=curr_lr, max_depth=curr_max_depth,
                                      n_estimators=curr_n_estimators, objective='reg:squarederror')
             # history = mdl.fit_cv(train_X, train_y, valid_X, valid_y)
-            model_fit = mdl.fit(train_X, train_y)
-            pred_y = model_fit.predict(valid_X)
+            mdl.fit(train_X, train_y)
+            pred_y = mdl.predict(valid_X)
             history = None
         elif model_name == 'Lasso':
             curr_alpha = alphas[randint(0, len(alphas) - 1)]
             parameter = {'alpha': curr_alpha}
             parameter_all.append(parameter)
             mdl = MultiTaskLasso(alpha=curr_alpha, fit_intercept=False)
-            model_fit = mdl.fit(train_X, train_y)
-            pred_y = model_fit.predict(valid_X)
+            mdl.fit(train_X, train_y)
+            pred_y = mdl.predict(valid_X)
             history = None
         elif model_name == 'FNN':
             curr_hidden_dim = hidden_dim[randint(0, len(hidden_dim) - 1)]
