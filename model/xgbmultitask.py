@@ -62,7 +62,7 @@ class XGBMultitask():
         pred_y = np.asarray((Parallel(n_jobs=self.n_jobs)(delayed(self.models[loc].predict)(X) for loc in range(self.num_models))))# 197x2x num_estimators
 
 
-        return pred_y
+        return pred_y.T
 
 
     def fit_single_output(self, mdl, train_x, train_y, test_x, test_y):

@@ -48,10 +48,16 @@ def compute_cosine(a, b):
 
 def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, device):
     # load data
-    train_X = load_results(rootpath + 'train_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
-    valid_X = load_results(rootpath + 'val_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
-    train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
-    valid_y = load_results(rootpath + 'val_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+    if model_name in ['CNN_LSTM', 'CNN_FNN']:
+        train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_X = load_results(rootpath + 'val_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        train_y = load_results(rootpath + 'train_y_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_y = load_results(rootpath + 'val_y_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+    else:
+        train_X = load_results(rootpath + 'train_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_X = load_results(rootpath + 'val_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_y = load_results(rootpath + 'val_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
 
     if model_name == 'EncoderFNN_AllSeq_AR_CI' or model_name == 'EncoderFNN_AllSeq_AR':
         hidden_dim = param_grid['hidden_dim']
@@ -88,14 +94,26 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             linear_dim = param_grid['linear_dim']
             drop_out = param_grid['drop_out']
     elif model_name == 'XGBoost':
+        train_X = train_X[:,-1,:] # one day
+        train_X = np.reshape(train_X,(train_X.shape[0],-1))
+        valid_X = valid_X[:,-1,:] # one day
+        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         max_depth = param_grid['max_depth']
         colsample_bytree = param_grid['colsample_bytree']
         gamma = param_grid['gamma']
         n_estimators = param_grid['n_estimators']
         lr = param_grid['learning_rate']
     elif model_name == 'Lasso':
+        train_X = train_X[:,-1,:] # one day
+        train_X = np.reshape(train_X,(train_X.shape[0],-1))
+        valid_X = valid_X[:,-1,:] # one day
+        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         alpha = param_grid['alpha']
     elif model_name == 'FNN':
+        # train_X = train_X[:,-1,:] # one day
+        train_X = np.reshape(train_X,(train_X.shape[0],-1))
+        # valid_X = valid_X[:,-1,:] # one day
+        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         train_dataset = model.MapDataset(train_X, train_y)
         train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
         hidden_dim = param_grid['hidden_dim']
@@ -350,19 +368,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 seed(314)
-# for cross-validation
-# param_grid = {'hidden_dim': [10, 20, 40, 60, 150, 200],
-#               'num_layers': [2, 3, 4, 5, 6],
-#               'learning_rate': [0.05, 0.01, 0.005, 0.001],
-#               'threshold': [0.5, 0.6],
-#               'num_epochs': [20, 50],  # [100, 200, 300],
-#               'decoder_len': [4, 11, 18],
-#               'last_layer': [True, False],
-#               'seq_len': [4, 11, 18],
-#               'linear_dim': [50, 100, 200],
-#               'drop_out': [0.1, 0.2]}
 
-param_grid = cfg_target.param_grid_en_de
+# param_grid = cfg_target.param_grid_en_de
 month_range = cfg_target.month_range
 val_years = cfg_target.val_years
 num_random = cfg_target.num_random
@@ -376,12 +383,21 @@ parser.add_argument('--model_name', type=str, default='EncoderFNN', help='the mo
 args = parser.parse_args()
 year = args.year
 model_name = args.model_name
+# print(model_name)
+if model_name == 'XGBoost':
+    param_grid = cfg_target.param_grid_xgb
+elif model_name == 'Lasso':
+    param_grid = cfg_target.param_grid_lasso
+elif model_name == 'FNN':
+    param_grid = cfg_target.param_grid_fnn
+elif model_name == 'CNN_FNN':
+    param_grid = cfg_target.param_grid_cnn_fnn
+elif model_name == 'CNN_LSTM':
+    param_grid = cfg_target.param_grid_cnn_lstm
+elif model_name in ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']:
+    param_grid = cfg_target.param_grid_en_de
+else:
+    print('can not find the model')
 
-# model_names = ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
-# model_names = ['EncoderFNN_AllSeq']
-# num_random = 4
-# year = 2012
-# val_years = [2013]
-# month_range = [1]
-
+#
 Parallel(n_jobs=12)(delayed(random_cv)(cv_index, cv_year=year, roothpath=rootpath, param_grid=param_grid, num_random=num_random, model_name=model_name, device=device) for cv_index in month_range)
