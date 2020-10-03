@@ -51,13 +51,17 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
     if model_name in ['CNN_LSTM', 'CNN_FNN']:
         train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
         valid_X = load_results(rootpath + 'val_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
-        train_y = load_results(rootpath + 'train_y_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
-        valid_y = load_results(rootpath + 'val_y_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_y = load_results(rootpath + 'val_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        output_dim = train_y.shape[-1]
     else:
         train_X = load_results(rootpath + 'train_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
         valid_X = load_results(rootpath + 'val_X_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
         train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
         valid_y = load_results(rootpath + 'val_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        # set input and output dim
+        input_dim = train_X.shape[-1]
+        output_dim = train_y.shape[-1]
 
     if model_name == 'EncoderFNN_AllSeq_AR_CI' or model_name == 'EncoderFNN_AllSeq_AR':
         hidden_dim = param_grid['hidden_dim']
@@ -108,7 +112,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         train_X = np.reshape(train_X,(train_X.shape[0],-1))
         valid_X = valid_X[:,-1,:] # one day
         valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
-        alpha = param_grid['alpha']
+        alphas = param_grid['alpha']
     elif model_name == 'FNN':
         # train_X = train_X[:,-1,:] # one day
         train_X = np.reshape(train_X,(train_X.shape[0],-1))
@@ -137,9 +141,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
     else:
         print('the model name is not in the list')
 
-    # set input and output dim
-    input_dim = train_X.shape[-1]
-    output_dim = train_y.shape[-1]
+
     history_all = []
     score = []
     parameter_all = []
@@ -280,7 +282,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             curr_alpha = alphas[randint(0, len(alphas) - 1)]
             parameter = {'alpha': curr_alpha}
             parameter_all.append(parameter)
-            mdl = MultiTaskLasso(alpha=curr_alpha, fit_intercept=False)
+            mdl = model.LassoMultitask(alpha=curr_alpha, fit_intercept=False)
             mdl.fit(train_X, train_y)
             pred_y = mdl.predict(valid_X)
             history = None
@@ -306,7 +308,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             parameter_all.append(parameters)
             num_var = len(train_X)
             input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
-            mdl = model.CNN_FNN(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
+            mdl = model.CnnFnn(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
                                 stride=curr_stride, hidden_dim=curr_hidden_dim,
                                 num_layers=curr_num_layers, num_epochs=100)
             mdl.to(device)
@@ -324,7 +326,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             parameter_all.append(parameters)
             num_var = len(train_X)
             input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
-            mdl = model.CNN_LSTM(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
+            mdl = model.CnnLSTM(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
                                  stride=curr_stride, hidden_dim=curr_hidden_dim,
                                  num_lstm_layers=curr_num_layers, num_epochs=curr_num_epochs,
                                  learning_rate=curr_lr)

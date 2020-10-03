@@ -2,7 +2,7 @@ import numpy as np
 
 ################### Configuration for Data Loading ################################
 path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
-rootpath_cv = '/export/scratch/S2S/random_cv/'
+rootpath_cv = '/export/scratch/S2S/random_cv/map/'
 # target variables
 target = 'tmp2m'  # target variable: 'tmp2m' or 'precip'
 target_res = 2  # target resolution
@@ -99,7 +99,7 @@ param_grid_cnn_fnn = {'kernel_size': [9, 13, 15],
 num_random = 4
 val_years = [2012, 2013, 2014, 2015, 2016]
 month_range = [1]
-model_names = ['XGBoost'] #, 'Lasso','FNN']  # , 'CNN_FNN', 'CNN_LSTM']
+model_names = ['CNN_FNN', 'CNN_LSTM']  # ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM']
 # ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 cv_metric = 'cos'
