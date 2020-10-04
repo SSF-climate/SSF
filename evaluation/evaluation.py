@@ -91,7 +91,7 @@ def eval_forecast(model_name, rootpath, test_years, month_range, rep=False, num_
     result_test['temporal_r2'] = temporal_r2
     result_test['spatial_r2'] = spatial_r2
     # training set evaluation
-    prediction_train = np.concatenate(prediction_test_all, axis=0)
+    prediction_train = np.concatenate(prediction_train, axis=0)
     target_train = np.concatenate(target_train, axis=0)
     temporal_cos_train = np.zeros(prediction_train.shape[0])
     spatial_cos_train = np.zeros(prediction_train.shape[1])
