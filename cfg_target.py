@@ -3,6 +3,8 @@ import numpy as np
 ################### Configuration for Data Loading ################################
 path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
 rootpath_cv = '/export/scratch/S2S/random_cv/map/'
+forecast_rootpath = '/export/scratch/S2S/forecast/'
+param_path = '/export/scratch/S2S/random_cv/cv_results_test/best_parameter/'
 # target variables
 target = 'tmp2m'  # target variable: 'tmp2m' or 'precip'
 target_res = 2  # target resolution
@@ -98,88 +100,11 @@ param_grid_cnn_fnn = {'kernel_size': [9, 13, 15],
 
 num_random = 4
 val_years = [2012, 2013, 2014, 2015, 2016]
+test_years = [2017, 2018]
 month_range = [1]
 model_names = ['CNN_FNN', 'CNN_LSTM']  # ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM']
 # ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 cv_metric = 'cos'
-
-################ Configuration fro training  #########################
-inset_gap = 0    # 'sampling gap among training samples' )
-#
-#past_ndays = 0   # number of days to aggaregate in the past: t-n,...,t-1'
-#
-future_mdays = 0 # number of days to aggaregate in the future: t+1,...,t+m'
-#
-#past_kyears = 0 # number of years in the past to aggaregate: t-k,...,t year'
-
-
-
-################ Configuration for Evaluation ##########################
-skill = 'cosine' # Type of skill: ['cosine', 'rmse','r2']'
-
-
-
-################ Configuration for Model Selection #####################
-regressor = 'autoencoder_combine'   # Type of regressor. Choose among ['Lasso','xgboost', 'fullconn','random','average','autoencoder_predictor','autoencoder_combine']
-
-
-
-# Lasso: The optimization objective for Lasso is: (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
-
-lasso_alpha = 0.1  # Constant that multiplies the L1 term. Defaults to 0.1. alpha = 0 is equivalent to an ordinary least square.')
-
-# xgboost: regularization parameters
-xg_objective = 'reg:squarederror'# 'specify the loss function to be used like for regression problem.'
-
-##xg_colsample_bytree = [0.3]      #'the subsample ratio of columns when constructing each tree.')
-##
-##xg_learning_rate = [0.1]         # Step size shrinkage used in update to prevents overfitting.Range is [0,1]')
-##
-##xg_max_depth = [5]               # Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.')
-##
-##xg_n_estimators = [100,150]      # number of trees you want to build.')
-##
-##xg_alpha = [0.1,0.5]             # L1 regularization term on weights. Increasing this value will make model more conservative.')
-##
-##xg_lambda = [0.1]                # L2 regularization term on weights. Increasing this value will make model more conservative.')
-
-xg_colsample_bytree = 0.3      #'the subsample ratio of columns when constructing each tree.')
-
-xg_learning_rate = 0.1        # Step size shrinkage used in update to prevents overfitting.Range is [0,1]')
-
-xg_max_depth = 5              # Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.')
-
-xg_n_estimators = 150      # number of trees you want to build.')
-
-xg_alpha = 0.1             # L1 regularization term on weights. Increasing this value will make model more conservative.')
-
-xg_lambda = 0.1                # L2 regularization term on weights. Increasing this value will make model more conservative.')
-
-
-# LSTM-Autoencoder
-# Parameters to create autoencoder model
-hid_dim = 64
-n_layers = 2
-enc_dropout = 0.
-dec_dropout = 0.
-# parameters related to training
-n_epochs = 1000
-learning_rate = 1e-3
-
-# CNN
-kernel_size = 5
-stride = 3
-padding = 0
-
-
-# CNN+attention
-head=6
-# CNN
-att_kernel_size = 5
-att_stride = 3
-att_padding = 0
-att_dropout=0.1
-att_num_encoder_layer=2
-att_input_dim=36
-att_ff_dim=64
+one_day = True
+num_rep = 10

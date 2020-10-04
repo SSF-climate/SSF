@@ -98,26 +98,26 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             linear_dim = param_grid['linear_dim']
             drop_out = param_grid['drop_out']
     elif model_name == 'XGBoost':
-        train_X = train_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = valid_X[:,-1,:] # one day
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+        train_X = train_X[:, -1, :] # one day
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
+        valid_X = valid_X[:, -1, :] # one day
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         max_depth = param_grid['max_depth']
         colsample_bytree = param_grid['colsample_bytree']
         gamma = param_grid['gamma']
         n_estimators = param_grid['n_estimators']
         lr = param_grid['learning_rate']
     elif model_name == 'Lasso':
-        train_X = train_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = valid_X[:,-1,:] # one day
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+        train_X = train_X[:, -1, :] # one day
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
+        valid_X = valid_X[:, -1, :] # one day
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         alphas = param_grid['alpha']
     elif model_name == 'FNN':
         # train_X = train_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
         # valid_X = valid_X[:,-1,:] # one day
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         train_dataset = model.MapDataset(train_X, train_y)
         train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
         hidden_dim = param_grid['hidden_dim']
