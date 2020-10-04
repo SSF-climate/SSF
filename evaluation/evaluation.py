@@ -51,7 +51,7 @@ def quantile_se(x, p=50):
     return se
 
 
-def eval_non_rep(model_name, rootpath, test_years, month_range):
+def eval_forecast(model_name, rootpath, test_years, month_range, rep=False, num_rep=10):
     target_train = []
     target_test = []
     prediction_train = []
@@ -61,8 +61,17 @@ def eval_non_rep(model_name, rootpath, test_years, month_range):
             result_temp = load_results(rootpath + 'forecast_results/results_{}_{}_{}.pkl'.format(model_name, year, month_id))
             target_train.append(result_temp['target_train'])
             target_test.append(result_temp['target_test'])
-            prediction_train.append(result_temp['prediction_train'])
-            prediction_test.append(result_temp['prediction_test'])
+            if rep is True:
+                prediction_train_temp = np.zeros(result_temp['target_train'].shape)
+                prediction_test_temp = np.zeros(result_temp['target_test'].shape)
+                for i in range(num_rep):
+                    prediction_train_temp += result_temp['prediction_train'][i]
+                    prediction_test_temp += result_temp['prediction_test'][i]
+                prediction_train.append(prediction_train_temp / float(num_rep))
+                prediction_test.append(prediction_test_temp / float(num_rep))
+            else:
+                prediction_train.append(result_temp['prediction_train'])
+                prediction_test.append(result_temp['prediction_test'])
     # test set evaluation
     prediction_test = np.concatenate(prediction_test, axis=0)
     target_test = np.concatenate(target_test, axis=0)
