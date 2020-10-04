@@ -29,18 +29,19 @@ from joblib import Parallel, delayed
 import argparse
 import torch
 import torch.nn as nn
+from utils import *
 
-
-def load_results(filename):
-    with open(filename, 'rb') as f:
-        data = pickle.load(f, encoding='bytes')
-    return data
-
-
-def save_results(filename, results):
-    with open(filename, 'wb') as fh:
-        pickle.dump(results, fh)
-
+#
+#def load_results(filename):
+#    with open(filename, 'rb') as f:
+#        data = pickle.load(f, encoding='bytes')
+#    return data
+#
+#
+#def save_results(filename, results):
+#    with open(filename, 'wb') as fh:
+#        pickle.dump(results, fh)
+#
 
 def compute_cosine(a, b):
     return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
