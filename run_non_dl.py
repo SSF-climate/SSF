@@ -8,6 +8,7 @@ import torch
 import model
 from joblib import Parallel, delayed
 from utils import *
+import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', type=str, help='model_name')
@@ -20,7 +21,7 @@ year = args.year
 month_id = args.month
 
 
-def forecast_non_dl(month_id, year, rootpath, param_path, model_name, num_rep, one_day):
+def forecast_non_dl(month_id, year, rootpath, param_path, model_name, one_day):
     results = {}
     train_X = load_results(rootpath + 'train_X_pca_{}_forecast{}.pkl'.format(year, month_id))
     test_X = load_results(rootpath + 'test_X_pca_{}_forecast{}.pkl'.format(year, month_id))
@@ -62,10 +63,9 @@ def forecast_non_dl(month_id, year, rootpath, param_path, model_name, num_rep, o
 
 
 # set device for running the code
-num_rep = cfg_target.num_rep
 rootpath = cfg_target.forecast_rootpath
 param_path = cfg_target.param_path
 one_day = cfg_target.one_day
 
-forecast_non_dl(month_id=month_id, year=year, rootpath=rootpath, param_path=param_path, model_name=model_name, num_rep=num_rep)
+forecast_non_dl(month_id=month_id, year=year, rootpath=rootpath, param_path=param_path, model_name=model_name, one_day=one_day)
 # Parallel(n_jobs=12)(delayed(forecast_rep)(month_id,rootpath=rootpath,param_path=param_path, device= device, model_name=model_name,folder_name=folder_name, num_rep= num_rep) for month_id in range(1,13))

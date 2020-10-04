@@ -6,8 +6,11 @@ from random import randint
 from random import seed
 import torch
 import model
+import argparse
 from joblib import Parallel, delayed
 from utils import *
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', type=str, help='model_name')
@@ -30,8 +33,8 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
     test_y = load_results(rootpath + 'test_y_pca_{}_forecast{}.pkl'.format(year, month_id))
 
     if model_name == 'EncoderFNN_AllSeq_AR_CI' or model_name == 'EncoderFNN_AllSeq_AR':
-        train_ar = load_results(rootpath + 'train_y_pca_ar_{}_forecast{}.pkl'.format(year, month_id))
-        test_ar = load_results(rootpath + 'test_y_pca_ar_{}_forecast{}.pkl'.format(year, month_id))
+        train_y_ar = load_results(rootpath + 'train_y_pca_ar_{}_forecast{}.pkl'.format(year, month_id))
+        test_y_ar = load_results(rootpath + 'test_y_pca_ar_{}_forecast{}.pkl'.format(year, month_id))
 
     input_dim = train_X.shape[-1]
     output_dim = train_y.shape[-1]
@@ -52,6 +55,14 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             # set data for training
             train_dataset = model.MapDataset(train_X, train_y)
             train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
+            model.init_weight(mdl)
+            # send model to gpu
+            mdl.to(device)
+            mdl.fit(train_loader, device)
+            state = {'state_dict': mdl.state_dict()}
+            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            pred_train = mdl.predict(train_X, device)
+            pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN':
             curr_hidden_dim = best_parameter['hidden_dim']
             curr_num_layer = best_parameter['num_layers']
@@ -66,6 +77,14 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             # set data for training
             train_dataset = model.MapDataset(train_X, train_y)
             train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
+            model.init_weight(mdl)
+            # send model to gpu
+            mdl.to(device)
+            mdl.fit(train_loader, device)
+            state = {'state_dict': mdl.state_dict()}
+            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            pred_train = mdl.predict(train_X, device)
+            pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN_AllSeq':
             curr_hidden_dim = best_parameter['hidden_dim']
             curr_num_layer = best_parameter['num_layers']
@@ -83,6 +102,14 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             # set data for training
             train_dataset = model.MapDataset(train_X, train_y)
             train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
+            model.init_weight(mdl)
+            # send model to gpu
+            mdl.to(device)
+            mdl.fit(train_loader, device)
+            state = {'state_dict': mdl.state_dict()}
+            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            pred_train = mdl.predict(train_X, device)
+            pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN_AllSeq_AR':
             curr_hidden_dim = best_parameter['hidden_dim']
             curr_num_layer = best_parameter['num_layers']
@@ -98,6 +125,14 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
                                              num_epochs=curr_num_epochs)
             train_dataset = model.MapDataset_ar(train_X, train_y_ar, train_y)
             train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
+            model.init_weight(mdl)
+            # send model to gpu
+            mdl.to(device)
+            mdl.fit(train_loader, device)
+            state = {'state_dict': mdl.state_dict()}
+            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            pred_train = mdl.predict(train_X, train_y_ar, device)
+            pred_y = mdl.predict(test_X, test_y_ar, device)
         elif model_name == 'EncoderFNN_AllSeq_AR_CI':
             curr_hidden_dim = best_parameter['hidden_dim']
             curr_num_layer = best_parameter['num_layers']
@@ -114,15 +149,14 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
                                                 threshold=curr_threshold, num_epochs=curr_num_epochs)
             train_dataset = model.MapDataset_ar(train_X, train_y_ar, train_y)
             train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
-
-        model.init_weight(mdl)
-        # send model to gpu
-        mdl.to(device)
-        mdl.fit(train_loader, device)
-        state = {'state_dict': mdl.state_dict()}
-        torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
-        pred_train = mdl.predict(train_X, device)
-        pred_y = mdl.predict(test_X, device)
+            model.init_weight(mdl)
+            # send model to gpu
+            mdl.to(device)
+            mdl.fit(train_loader, device)
+            state = {'state_dict': mdl.state_dict()}
+            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            pred_train = mdl.predict(train_X, train_y_ar, device)
+            pred_y = mdl.predict(test_X, test_y_ar, device)
         results['target_train'] = train_y
         results['prediction_train'].append(pred_train)
         results['target_test'] = test_y

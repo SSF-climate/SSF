@@ -3,8 +3,8 @@ import numpy as np
 ################### Configuration for Data Loading ################################
 path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
 rootpath_cv = '/export/scratch/S2S/random_cv/map/'
-forecast_rootpath = '/export/scratch/S2S/forecast/'
-param_path = '/export/scratch/S2S/random_cv/cv_results_test/best_parameter/'
+forecast_rootpath = '/export/scratch/S2S/forecast/map/'
+param_path = '/export/scratch/S2S/random_cv/map/cv_results_test/best_parameter/'
 # target variables
 target = 'tmp2m'  # target variable: 'tmp2m' or 'precip'
 target_res = 2  # target resolution
@@ -107,4 +107,4 @@ model_names = ['CNN_FNN', 'CNN_LSTM']  # ['Lasso', 'FNN', 'XGBoost','CNN_FNN', '
 # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 cv_metric = 'cos'
 one_day = True
-num_rep = 10
+num_rep = 3
