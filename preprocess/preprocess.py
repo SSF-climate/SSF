@@ -874,5 +874,389 @@ def train_test_split_target_ar(rootpath,
     save_results(rootpath, 'test_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), test_y)
 
 
+############ Convert spatial covariates to Map: for CNN/CNN-LSTM model #####################
+
+def get_map_per_date(one_day, var):
+    """Apply func to each group dataframe in df_grouped in parallel
+
+    Args:
+
+        one_day: output of grouby applied to pandas DataFrame
+
+        var: function to apply to each group dataframe in df_grouped
+
+    Returns:
+
+        temp_map
+    """
+
+
+    lon_min = np.min(one_day.index.get_level_values('lon').values)
+    lon_max = np.max(one_day.index.get_level_values('lon').values)
+    lat_min = np.min(one_day.index.get_level_values('lat').values)
+    lat_max = np.max(one_day.index.get_level_values('lat').values)
+
+    temp_map = np.zeros((int((lat_max - lat_min)/0.5+1), int((lon_max - lon_min)/0.5+1)))
+
+    one_day.reset_index(inplace=True)
+
+    one_day.apply(one_day2map, args=(var, lon_min, lat_min, temp_map), axis=1)
+
+    return([np.nan_to_num(temp_map), one_day.iloc[0]['start_date']])
+
+
+
+
+def one_day2map(one_day, var, lon_min, lat_min, temp_map):
+    """Convert spatial covariate at date t to a sqaured map
+
+    Args:
+
+        one_day: output of grouby applied to pandas DataFrame
+
+        var: function to apply to each group dataframe in df_grouped
+
+        lon_min: int -- left bound of the rectange box for map
+        lat_min: int -- lower bound of the rectange box for map
+        temp_map: list -- to append map data
+
+    """
+    temp_map[int((one_day['lat'] - lat_min)/0.5),
+             int((one_day['lon'] - lon_min)/0.5)] = one_day[var]
+
+
+
+    
+
+def apply_parallel(df_grouped, func, num_cores=cpu_count(), **kwargs):
+
+    """Apply func to each group dataframe in df_grouped in parallel
+
+​
+
+    Args:
+
+        df_grouped: output of grouby applied to pandas DataFrame
+
+        func: function to apply to each group dataframe in df_grouped
+
+        num_cores: number of CPU cores to use
+
+        kwargs: additional keyword args to pass to func
+
+    """
+
+    # Associate only one OpenMP thread with each core
+
+    os.environ['OMP_NUM_THREADS'] = str(1)
+
+    pool = Pool(num_cores)
+
+    # Pass additional keyword arguments to func using partial
+
+    ret_list = pool.map(partial(func, **kwargs), [group for name, group in df_grouped])
+
+    pool.close()
+
+    # Unset environment variable
+
+    del os.environ['OMP_NUM_THREADS']
+
+    return ret_list
+
+
+def convert_covariate_to_map(df_covaraiate, var='sst', num_cores=16):
+
+    """ Convert Spatial-temporal Covariate to a squared map
+
+    Args:
+            df_covariate: pandas dataframe -- Spatial-temporal covariate to convert
+            var: str -- covariate name, choose from: 'sst', 'hgt500', 'slp', 'rhum500',
+                                                     'tmp2m','precip', 'sm',
+                                                     'hgt10','hgt200','hgt700','rhum.sig995'
+            num_cores: int -- number of cores for parallel 
+
+    Returns:
+
+            results: list of [array, time_stamp] -- array stores the converted map,
+                                                    time_stampe is the corresponding date
+    """
+
+
+
+    results = apply_parallel(df_covaraiate.groupby('start_date'), get_map_per_date, num_cores=16, var=var)
+
+    return results
+
+
+def get_test_train_index_map(test_start, test_end, train_range=10, past_years=0):
+
+    """ Construct train/test time index used to split training and test dataset
+
+    Args:
+            test_start, test_end: pd.Timestamp() -- the start date and the end date of the test set
+            train_range: int -- the length (years) to be included in the training set
+            past_years: int -- the length (years) of features in the past to be included
+
+    Return:
+            test_start_shift: pd.Timestamp() -- new start date for test
+                                                after including # of years in the past
+            train_start_shift:pd.Timestamp() -- new start date for training
+                                                after including # of years in the past
+            train_time_index: list of pd.Timestamp() -- time index for training set
+            
+    """    
+
+
+    #print(test_start,test_end,train_range,past_years)
+
+    test_start_shift = test_start - pd.DateOffset(years=train_range + past_years, days=28)
+    
+
+    # handles the train time indices
+    train_end = test_start - pd.DateOffset(days=28) # you need to gap 28 days to predict Feb-01 standing on Jan-03
+    train_start = train_end - pd.DateOffset(years=train_range) # train starts from 10 years before the end date
+    
+
+    train_start_shift = train_start - pd.DateOffset(years=past_years, days=28) # shift another two years to create the sequence
+
+    train_time_index = pd.date_range(train_start, train_end) 
+
+
+    return test_start_shift, train_start_shift, train_time_index
+
+
+def zscore_spatial_temporal_map(rootpath,
+                                target,
+                                var_id='tmp2m', var_location='us',
+                                train_start='1986-01-01', train_end='2016-12-31',
+                                test_start='2017-01-01', test_end='2018-12-31',
+                                date_id='start_date',
+                                to_save=False):
+
+    """ Apply zscore on spatial-temporal covariate map
+
+    Args:
+            rootpath: str -- directory to save the results
+            target: pd.Dataframe -- dataframe contains data that is about to apply zscore
+            var_id: str -- variable name of covariate
+            var_locations: str -- the correspond location of covariate,
+                                  choose from pacific, atlantic, us, global
+            train_start, train_end: str -- the start date and the end date of the training set
+            test_start, test_end: str -- the start date and the end date of the test set
+            date_id: column name for time/date
+            to_save: bool -- whether to save the zscored variable to file
+
+
+    """
+
+    idx = pd.IndexSlice
+    # for training set, i.e., 30 years in the past
+    df1 = target.loc[idx[:, :, train_start:train_end], :]
+    # for test set
+    df2 = target.loc[idx[:, :, test_start:test_end], :]
+
+
+
+    # ---- Day-Mothn Mean of each location ---- #
+    # Add 'month', 'day' column, and get mean and std of each date, each location
+    df1 = df1.groupby(['lat', 'lon']).apply(lambda df: get_mean(df, var_id, date_id))
+
+    #  get first element of each group: mean for each location each month-day 
+    month_day = df1.groupby(['lat', 'lon', 'month', 'day']).first() 
+    month_day = month_day.reset_index()
+
+    # add month-day column to second dataframe
+    df2 = df2.groupby(['lat', 'lon']).apply(lambda df: add_month_day(df, date_id))
+    df2.reset_index(level=2, inplace=True)
+
+    var_cols = ['{}_daily_{}'.format(var_id, col_type) for col_type in ['mean', 'std']]
+
+    # add mean and std get from df1
+    df2 = df2.merge(month_day[['lat', 'lon', 'month', 'day'] + var_cols], how='left',
+                    on=['lat', 'lon', 'month', 'day'])
+    #df2 = check_feb29(df2,month_day,var_cols) # check if df2 has missing values for mean/std i.e. Feb 29
+
+
+    df2 = df2.sort_values(by=['lat', 'lon', date_id])
+    df2 = df2.set_index(['lat', 'lon', date_id]) # add multi-index back
+
+
+    df1[var_id + '_zscore'] = (df1[var_id] - df1['{}_daily_mean'.format(var_id)])/df1['{}_daily_std'.format(var_id)]
+    df2[var_id + '_zscore'] = (df2[var_id] - df2['{}_daily_mean'.format(var_id)])/df2['{}_daily_std'.format(var_id)]
+
+
+
+    df_all = df1.append(df2)
+    df_all.sort_index(level=['lat', 'lon'], inplace=True)
+
+    if to_save:
+        df_all.to_hdf(rootpath+'{}_{}_multitask_zscore.h5'.format(var_location, var_id), key=var_id, mode='w')
+
+    return df_all
+
+def train_val_split_map(rootpath,
+                        var_names, var_locations,
+                        val_year, val_month,
+                        train_range=10, past_years=0,
+                        test_range=28, test_freq='7D',
+                        n_jobs=16):
+
+    """ Generate Train-validation set for spatiotemporal covariate maps, given a spesific validation month-year
+
+
+    Args:
+            rootpath: str -- the directory to save the results
+            var_names: list of str -- a list of covariates,
+                                      choose from ['sst','tmp2m','sm','hgt500','slp','rhum500', etc.]
+            var_locations: list of str -- a list of covariates' locations,
+                                          choose from ['pacific','atlantic','us','global']
+            val_year,val_month: int -- the year and the month for the validation set
+            train_range: int -- the length (years) to be included in the training set
+            past_years: int -- the length of features in the past to be included
+            test_range: int -- the number of days used to create validation set
+            test_freq: str -- the frequency to generate dates in the validtion set,
+                              e.g., '7D' means to generate weekly data
+            n_jobs: int -- number of workers for parallel
+    """
+
+
+    idx = pd.IndexSlice
+    # handles the test time indices
+    test_start = pd.Timestamp('{}-{:02d}-01'.format(val_year, val_month), freq='D')
+    test_end = test_start + pd.DateOffset(days=test_range)
+    #[test_start,test_end]
+    test_time_index = pd.date_range(test_start, test_end, freq=test_freq) 
+
+    test_start_shift, train_start_shift, train_time_index = get_test_train_index_map(test_start,
+                                                                                     test_end,
+                                                                                     train_range,
+                                                                                     past_years)
+    train_end = train_time_index[-1]
+
+
+    train_x = []
+    val_x = []
+
+    #time_index1 = pd.date_range(train_start_shift, train_end) 
+    #time_index2 = pd.date_range(test_start_shift, test_end) 
+    #df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
+    #df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
+
+
+    for var, location in zip(var_names, var_locations):
+        #covariate: a list with two element [i][0]: covariate_map; [i][1]: corresponding time stamp
+        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location)) 
+
+        #convert covariate_map into a numpy array: # samples x W x H
+        covariate_map = np.asarray([covariate[i][0] for i in range(len(covariate))])
+        #convaert time_stampe into a list, which will be used as the index for
+        #a pandas dataframe that provides the corresponding location information
+        time_stamp = [covariate[i][1] for i in range(len(covariate))]
+
+        df_time = pd.DataFrame(data={'pos': np.arange(len(time_stamp))}, index=time_stamp)
+
+
+        temp_train_x = (torch.as_tensor(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df_time['pos'], covariate_map, 0)
+                                                                for date in train_time_index)).float().unsqueeze(1))
+
+        temp_val_x = (torch.as_tensor(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df_time['pos'], covariate_map, 0)
+                                                              for date in test_time_index)).float().unsqueeze(1))
+    
+        train_x.append(temp_train_x)
+        val_x.append(temp_val_x)
+
+
+        print(temp_train_x.shape, temp_val_x.shape)
+
+    return train_x, val_x
+
+
+
+def train_test_split_map(rootpath,
+                         var_names, var_locations,
+                         test_time_index_all,
+                         test_year, test_month,
+                         train_range=24, past_years=0,
+                         n_jobs=16):
+
+
+    """ Training and test split for spatiotemporal covariate maps
+
+
+    Args:
+            rootpath: str -- the directory to save the results
+            var_names: list of str -- a list of covariates,
+                                      choose from ['sst','tmp2m','sm','hgt500','slp','rhum500', etc.]
+            var_locations: list of str -- a list of covariates' locations,
+                                          choose from ['pacific','atlantic','us','global']
+            test_time_index_all: list of pd.timestamp() -- the sequence of test dates to mimic the live evaluation,
+                                                           test dates are choose from the list based on the month and the year
+            test_year,test_month: int -- yyyy-mm the year and the month for the test set
+            train_range: int -- the length (years) to be included in the training set
+            past_years: int -- the length of features in the past to be included
+            n_jobs: int -- number of workers for parallel
+    """
+
+
+
+
+
+    # handles the test time indices
+    test_time_index = test_time_index_all[(test_time_index_all.month == test_month)
+                                          & (test_time_index_all.year == test_year)]
+
+    test_start = test_time_index[0]
+    test_end = test_time_index[-1]
+
+
+
+
+    test_start_shift, train_start_shift, train_time_index = get_test_train_index_map(test_start, test_end,
+                                                                                     train_range=train_range,
+                                                                                     past_years=past_years)
+    train_end = train_time_index[-1]
+        
+
+
+
+    train_x = []
+    test_x = []
+    
+    #time_index1 = pd.date_range(train_start_shift, train_end) 
+    #time_index2 = pd.date_range(test_start_shift, test_end) 
+    #df1 = pd.DataFrame(data = {'pos':np.arange(len(time_index1))},index=time_index1)# training index
+    #df2 = pd.DataFrame(data = {'pos':np.arange(len(time_index2))},index=time_index2)
+
+
+    for var, location in zip(var_names, var_locations):
+        #covariate: a list with two element [i][0]: covariate_map; [i][1]: corresponding time stamp
+        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location)) 
+
+        #convert covariate_map into a numpy array: # samples x W x H
+        covariate_map = np.asarray([covariate[i][0] for i in range(len(covariate))])
+        #convaert time_stampe into a list, which will be used as the index for
+        #a pandas dataframe that provides the corresponding location information
+        time_stamp = [covariate[i][1] for i in range(len(covariate))]
+
+        df_time = pd.DataFrame(data={'pos': np.arange(len(time_stamp))}, index=time_stamp)
+
+
+        temp_train_x = (torch.as_tensor(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df_time['pos'], covariate_map, 0)
+                                                                for date in train_time_index)).float().unsqueeze(1))
+
+        temp_test_x = (torch.as_tensor(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df_time['pos'], covariate_map, 0)
+                                                               for date in test_time_index)).float().unsqueeze(1))
+
+        train_x.append(temp_train_x)
+        test_x.append(temp_test_x)
+
+
+        print(temp_train_x.shape, temp_test_x.shape)
+
+    return train_x, test_x
+
+
+
 
 
