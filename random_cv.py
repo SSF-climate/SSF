@@ -46,7 +46,7 @@ def compute_cosine(a, b):
     return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
 
 
-def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, device):
+def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, device, one_day):
     # load data
     if model_name in ['CNN_LSTM', 'CNN_FNN']:
         train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
@@ -98,9 +98,10 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             linear_dim = param_grid['linear_dim']
             drop_out = param_grid['drop_out']
     elif model_name == 'XGBoost':
-        train_X = train_X[:,-1,:] # one day
+        if one_day = True:
+            train_X = train_X[:,-1,:] # one day
+            valid_X = valid_X[:,-1,:] # one day
         train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = valid_X[:,-1,:] # one day
         valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         max_depth = param_grid['max_depth']
         colsample_bytree = param_grid['colsample_bytree']
@@ -108,15 +109,16 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         n_estimators = param_grid['n_estimators']
         lr = param_grid['learning_rate']
     elif model_name == 'Lasso':
-        train_X = train_X[:,-1,:] # one day
+        if one_day = True:
+            train_X = train_X[:,-1,:] # one day
+            valid_X = valid_X[:,-1,:] # one day
         train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = valid_X[:,-1,:] # one day
         valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         alphas = param_grid['alpha']
     elif model_name == 'FNN':
         # train_X = train_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
         # valid_X = valid_X[:,-1,:] # one day
+        train_X = np.reshape(train_X,(train_X.shape[0],-1))
         valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
         train_dataset = model.MapDataset(train_X, train_y)
         train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
@@ -376,7 +378,7 @@ month_range = cfg_target.month_range
 val_years = cfg_target.val_years
 num_random = cfg_target.num_random
 rootpath = cfg_target.rootpath_cv
-
+one_day = cfg_target.one_day
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--year', type=int, default=2012, help='the year selected for hyper parameter tuning')
@@ -402,4 +404,4 @@ else:
     print('can not find the model')
 
 #
-Parallel(n_jobs=12)(delayed(random_cv)(cv_index, cv_year=year, roothpath=rootpath, param_grid=param_grid, num_random=num_random, model_name=model_name, device=device) for cv_index in month_range)
+Parallel(n_jobs=12)(delayed(random_cv)(cv_index, cv_year=year, roothpath=rootpath, param_grid=param_grid, num_random=num_random, model_name=model_name, device=device, one_day=one_day) for cv_index in month_range)
