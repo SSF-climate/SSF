@@ -15,7 +15,7 @@ num_rep = cfg_target.num_rep
 
 result_all = {}
 for model_name in model_names:
-    print('evaluate ',model_name)
+    print('evaluate ', model_name)
     if model_name in ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR', 'EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']:
         result_train, result_test = evaluation.eval_forecast(model_name, rootpath, test_years, month_range, True, num_rep)
     elif model_name in ['XGBoost', 'Lasso', 'FNN', 'CNN_FNN', 'CNN_LSTM']:
