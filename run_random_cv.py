@@ -2,17 +2,25 @@ import os
 import cfg_target
 import pickle
 import numpy as np
-from utils import *
-import argparse
 
 # from random_cv import best_hyperparameter
 
-model_names = cfg_target.model_names  # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
+model_names = ['FNN']#cfg_target.model_names  # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 val_years = cfg_target.val_years  # [2012, 2013, 2014, 2015, 2016]
 month_range = cfg_target.month_range
 rootpath = cfg_target.rootpath_cv
 metric = cfg_target.cv_metric
 
+
+def load_results(filename):
+    with open(filename, 'rb') as f:
+        data = pickle.load(f, encoding='bytes')
+    return data
+
+
+def save_results(filename, results):
+    with open(filename, 'wb') as fh:
+        pickle.dump(results, fh)
 
 
 def best_hyperparameter(val_years, month_range, eval_metrics, model_name, rootpath):
@@ -37,9 +45,9 @@ def best_hyperparameter(val_years, month_range, eval_metrics, model_name, rootpa
 
 
 for model_name in model_names:
-     for year in val_years:
-         cmd = "{} {} --year {} --model_name {}".format("python", 'random_cv.py', year, model_name)
-         print(cmd)
-         os.system(cmd)
+#     for year in val_years:
+#         cmd = "{} {} --year {} --model_name {}".format("python", 'random_cv.py', year, model_name)
+#         print(cmd)
+#         os.system(cmd)
     print('find the best hyper parameter for {}'.format(model_name))
     best_hyperparameter(val_years=val_years, month_range=month_range, eval_metrics=metric, model_name=model_name, rootpath=rootpath)

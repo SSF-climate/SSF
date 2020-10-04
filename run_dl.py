@@ -44,7 +44,8 @@ def forecast_dl(month_id, year, rootpath, param_path, device, model_name):
     best_parameter = load_results(param_path + '{}_forecast{}.pkl'.format(model_name, month_id))
     if model_name == 'FNN':
         train_X = np.reshape(train_X, (train_X.shape[0], -1))
-        test_X = np.reshape(test_X, (valid_X.shape[0], -1))
+        test_X = np.reshape(test_X, (test_X.shape[0], -1))
+        input_dim = input_dim = train_X.shape[-1]
         train_dataset = model.MapDataset(train_X, train_y)
         train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
         curr_hidden_dim = best_parameter['hidden_dim']
@@ -100,6 +101,7 @@ num_rep = cfg_target.num_rep
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 rootpath = cfg_target.forecast_rootpath
 param_path = cfg_target.param_path
+one_day = cfg_target.one_day
 
 forecast_dl(month_id=month_id, year=year, rootpath=rootpath, param_path=param_path, device=device, model_name=model_name)
 # Parallel(n_jobs=12)(delayed(forecast_rep)(month_id,rootpath=rootpath,param_path=param_path, device= device, model_name=model_name,folder_name=folder_name, num_rep= num_rep) for month_id in range(1,13))
