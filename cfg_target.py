@@ -82,14 +82,14 @@ past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 # param_grid for encoder decoder model
 param_grid_en_de = {'hidden_dim': [10, 20, 40, 60, 150, 200],
                     'num_layers': [2, 3, 4, 5, 6],
-                    'learning_rate': [0.05, 0.01, 0.005, 0.001],
+                    'learning_rate': [0.005, 0.001],
                     'threshold': [0.5, 0.6],
-                    'num_epochs': [20, 50],  # [100, 200, 300],
+                    'num_epochs': [100, 200, 300],
                     'decoder_len': [4, 11, 18],
                     'last_layer': [True, False],
-                    'seq_len': [4, 11, 18],
+                    'seq_len': [18],
                     'linear_dim': [50, 100, 200],
-                    'drop_out': [0.1, 0.2],
+                    'drop_out': [0, 0.1, 0.2],
                     'ci_dim': 8}
 
 # param_grid for XGBoost
