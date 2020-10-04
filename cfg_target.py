@@ -28,9 +28,6 @@ covariates_global = []  # ['hgt500','slp','rhum500'] #'spatial-temporal covariat
 covariates_sea = []  # ['sst'] #'spatial-temporal covariates over ocean.'
 pacific_atlantic = True
 
-past_ndays = 0   # number of days to aggaregate in the past: t-n,...,t-1'
-
-past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 
 
 lat_range_global = [0, 50.0]   # 'latitude range for covariates')
@@ -56,6 +53,29 @@ save_cov = True    # flag to indicate weather to save covariance
 
 # target_lat = 37.75 # 'latitude range for target variable'
 # target_lon = 237.75 #'longitude range for target variable'
+################### Configuration for Dataset ################################
+
+# train-validation split
+data_target_file = 'test/target_multitask_zscore.h5'
+data_cov_file = 'test/covariates_all_pc10_nao_nino.h5'
+target_var = 'tmp2m'
+
+val_years = [2016, 2015, 2014, 2013, 2012] # years to create validation sets
+
+val_train_range = 5 # number of years in the training set (train-val split)
+
+val_range = 28 # number of days to include in the validation set
+val_freq = '7D' # frequency to generate validation date
+
+# train-test split
+test_years = [2017, 2018]
+
+test_train_range = 24 # number of years in the training set (train-test split)
+
+
+past_ndays = 0   # number of days to aggaregate in the past: t-n,...,t-1'
+
+past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 
 
 ################ Configuration for hyper parameter tuning  ######################
@@ -99,8 +119,7 @@ param_grid_cnn_fnn = {'kernel_size': [9, 13, 15],
                       'num_layers': [2, 4]}
 
 num_random = 4
-val_years = [2012, 2013, 2014, 2015, 2016]
-test_years = [2017, 2018]
+
 month_range = [1]
 model_names = ['CNN_FNN', 'CNN_LSTM']  # ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM']
 # ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
