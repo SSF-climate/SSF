@@ -26,6 +26,16 @@ month_id = args.month
 
 
 def forecast_non_dl(month_id, year, rootpath, param_path, model_name, one_day):
+    """Run non deep learning models (XGBoost and Multitask Lasso) - results are saved in a folder named forecast_results
+    Args:
+    month_id: an int indicating the month which is being forecasted
+    year: an int indicating the year which is being forecasted
+    rootpath: the path where the training and test sets are saved
+    param_path: the path where the best hyperparameters are saved
+    device: an indication if the model is runing on GPU or CPU
+    model_name: a string indicating the name of a model
+    one_day: True or False, indicating if only the most recent available day is used for training a model (XGBoost or Lasso)
+    """
     results = {}
     train_X = load_results(rootpath + 'train_X_pca_{}_forecast{}.pkl'.format(year, month_id))
     test_X = load_results(rootpath + 'test_X_pca_{}_forecast{}.pkl'.format(year, month_id))

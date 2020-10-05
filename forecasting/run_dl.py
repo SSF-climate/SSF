@@ -28,6 +28,15 @@ month_id = args.month
 
 
 def forecast_dl(month_id, year, rootpath, param_path, device, model_name):
+    """Run deep learning models (CNN, FNN, CNN_LSTM) - results are saved in a folder named forecast_results
+    Args:
+    month_id: an int indicating the month which is being forecasted
+    year: an int indicating the year which is being forecasted
+    rootpath: the path where the training and test sets are saved
+    param_path: the path where the best hyperparameters are saved
+    device: an indication if the model is runing on GPU or CPU
+    model_name: a string indicating the name of a model
+    """
     results = {}
     results['prediction_train'] = []
     results['prediction_test'] = []

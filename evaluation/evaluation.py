@@ -9,15 +9,33 @@ from utils import *
 
 
 def compute_rmse(target, prediction):
+    """Compute rmse between the ground truth and forecasts
+    Args:
+    target: a numpy array with ground truth
+    forecasts: a numpy array with forecasted values
+    Returns: rmse between the ground truth and forecasts
+    """
     return np.sqrt(mean_squared_error(target, prediction))
 
 
 def compute_cosine(target, prediction):
+    """Compute cosine simialrity between the ground truth and forecasts
+    Args:
+    target: a numpy array with ground truth
+    forecasts: a numpy array with forecasted values
+    Returns: cosine simialrity between the ground truth and forecasts
+    """
     result = np.dot(target, prediction) / (LA.norm(target) * LA.norm(prediction))
     return result
 
 
 def r_squared(y_true, y_pred, y_mean=None):
+    """Compute relative R^2 between the ground truth and forecasts
+    Args:
+    target: a numpy array with ground truth
+    forecasts: a numpy array with forecasted values
+    Returns: relative R^2 between the ground truth and forecasts
+    """
     if y_mean is None:
         y_mean = np.zeros(y_true.shape[0]) * np.mean(y_true)
     rss = np.sum((y_true - y_pred)**2)
@@ -27,6 +45,10 @@ def r_squared(y_true, y_pred, y_mean=None):
 
 
 def print_eval_stats(eval_result):
+    """Print the mean(se), median(se), 0.25 quantile(se), and 0.75 quantile (se) of the array, where se represents standard deviation
+    Args:
+    eval_result: a numpy array with evluation results
+    """
     print('mean: {:.4f} ({:.4f}) median {:.4f} ({:.4f})'.format(np.mean(eval_result),
                                                                 stats.sem(eval_result),
                                                                 np.median(eval_result),
@@ -38,6 +60,7 @@ def print_eval_stats(eval_result):
 
 
 def quantile_se(x, p=50):
+    # compute the standard error for different quantiles
     # Source: Jun Shao, "Mathematical Statistics". Springer Texts in Statistics, 1999. Page 306: Theorem 5.10
     # p: quantile: int between 0-100
     # x: data sequence
@@ -52,6 +75,18 @@ def quantile_se(x, p=50):
 
 
 def eval_forecast(model_name, rootpath, test_years, month_range, rep=False, num_rep=10):
+    """Evalute the forecasts on training and test sets
+    Args:
+    model_name: a string indicating the name of a model
+    rootpath: the path where the forecasts are saved
+    test_years: a list of years in the test set
+    month_range: a list of months in the test set
+    rep: True or False, indicating if the reults include repeated runs
+    num_rep: the number of repetition
+    Returns:
+    result_train: the forecasting performance (temporal/spatial cosine/r2) on training set
+    result_test: the forecasting performance (temporal/spatial cosine/r2) on test set
+    """
     target_train = []
     target_test = []
     prediction_train = []

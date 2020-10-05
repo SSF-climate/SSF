@@ -24,10 +24,8 @@ var_name = args.var
 rootpath = cfg.rootpath_data
 path_to_save = cfg.savepath_data
 
-
-
 if var_location == 'global':
-    filename ='covariates_global.h5'
+    filename = 'covariates_global.h5'
 elif var_location == 'us':
     filename = 'covariates_us.h5'
 elif var_location == 'pacific':
@@ -38,7 +36,6 @@ else:
     raise ValueError("No such covariate!")
 
 
-
 train_start = pd.Timestamp(cfg.train_start_date)
 train_end = pd.Timestamp(cfg.train_end_date)
 
@@ -47,15 +44,13 @@ test_end = pd.Timestamp(cfg.end_date)
 
 n_components = cfg.num_pcs
 
-data =  pd.read_hdf(rootpath+filename)
-
-
+data = pd.read_hdf(rootpath + filename)
 
 preprocess.get_pca_from_covariate(path_to_save,
                                   data,
-                                  var_name,var_location,
-                                  train_start,train_end,
-                                  test_start,test_end,
+                                  var_name, var_location,
+                                  train_start, train_end,
+                                  test_start, test_end,
                                   n_components=n_components)
 
 pca_filename = '{}_{}_pca_all.h5'.format(var_location, var_name)
@@ -63,12 +58,12 @@ pca_data = pd.read_hdf(path_to_save + pca_filename)
 
 
 for i in range(n_components):
-        var = '{}_{}_pca_{}'.format(var_location, var_name, i)
+    var = '{}_{}_pca_{}'.format(var_location, var_name, i)
 
-        preprocess.zscore_temporal(path_to_save,
-                                   pca_data,var,
-                                   train_start, train_end,
-                                   test_start, test_end)
+    preprocess.zscore_temporal(path_to_save,
+                               pca_data, var,
+                               train_start, train_end,
+                               test_start, test_end)
 
 
 
@@ -107,9 +102,3 @@ for i in range(n_components):
 ##                                  n_components=10)
 ##
 ##
-
-
-
-
-
-

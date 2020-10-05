@@ -4,8 +4,14 @@
 # need a function for clarify the spatial range
 import os
 import sys
+from random import randint
+from random import seed
 os.chdir(os.path.join(".."))
 sys.path.insert(0, 'SSF/')
+from utils import *
+import cfg_target
+import torch
+import model
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
@@ -16,27 +22,36 @@ import numpy as np
 import pandas as pd
 import math
 import pickle
-from random import randint
-from random import seed
-import torch
-import model
-import cfg_target
-from torch.utils.data.dataloader import default_collate
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from sklearn.metrics import mean_squared_error
 from joblib import Parallel, delayed
 import argparse
 import torch
 import torch.nn as nn
-from utils import *
 
 
 def compute_cosine(a, b):
+    """Compute cosine similarity between two vectors
+    Args:
+    a,b: numpy array
+    Returns: a float (cosine similarity)
+    """
     return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
 
 
 def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, device, one_day):
+    """Hyperparameter tuning through random search
+
+    Args:
+    cv_index: the month of the valiation set
+    cv_year: the year of the valiation set
+    rootpath: the path where training-validtion sets are saved
+    param_grid: a dictionary, consisting the grid of hyperparameters
+    num_randon: the number of sets of hyperparameters to evaluate(tune)
+    model_name: a string representing the name of a model
+    device: indicates if the model should be run on cpu or gpu
+    one_day: True or False, indicating if only the most recent available day is used for training a model (XGBoost or Lasso)
+    """
     # load data
     if model_name in ['CNN_LSTM', 'CNN_FNN']:
         train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
@@ -89,10 +104,10 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             drop_out = param_grid['drop_out']
     elif model_name == 'XGBoost':
         if one_day = True:
-            train_X = train_X[:,-1,:] # one day
-            valid_X = valid_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+            train_X = train_X[:, -1, :]  # one day
+            valid_X = valid_X[:, -1, :]  # one day
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         max_depth = param_grid['max_depth']
         colsample_bytree = param_grid['colsample_bytree']
         gamma = param_grid['gamma']
@@ -100,16 +115,16 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         lr = param_grid['learning_rate']
     elif model_name == 'Lasso':
         if one_day = True:
-            train_X = train_X[:,-1,:] # one day
-            valid_X = valid_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+            train_X = train_X[:, -1, :]  # one day
+            valid_X = valid_X[:, -1, :]  # one day
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         alphas = param_grid['alpha']
     elif model_name == 'FNN':
         # train_X = train_X[:,-1,:] # one day
         # valid_X = valid_X[:,-1,:] # one day
-        train_X = np.reshape(train_X,(train_X.shape[0],-1))
-        valid_X = np.reshape(valid_X,(valid_X.shape[0],-1))
+        train_X = np.reshape(train_X, (train_X.shape[0], -1))
+        valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         train_dataset = model.MapDataset(train_X, train_y)
         train_loader = DataLoader(dataset=train_dataset, batch_size=512, shuffle=False)
         hidden_dim = param_grid['hidden_dim']
@@ -132,7 +147,6 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         num_epochs = param_grid['module__num_epochs']
     else:
         print('the model name is not in the list')
-
 
     history_all = []
     score = []
@@ -301,8 +315,8 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             num_var = len(train_X)
             input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
             mdl = model.CnnFnn(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
-                                stride=curr_stride, hidden_dim=curr_hidden_dim,
-                                num_layers=curr_num_layers, num_epochs=100)
+                               stride=curr_stride, hidden_dim=curr_hidden_dim,
+                               num_layers=curr_num_layers, num_epochs=100)
             mdl.to(device)
             history = mdl.fit_cv(train_loader, valid_X, valid_y, device)
             pred_y = mdl.predict(valid_X, device)
@@ -319,9 +333,9 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             num_var = len(train_X)
             input_dim = model.get_input_dim(train_X, num_var, curr_stride, curr_kernel_size)
             mdl = model.CnnLSTM(num_var, input_dim, output_dim, kernel_size=curr_kernel_size,
-                                 stride=curr_stride, hidden_dim=curr_hidden_dim,
-                                 num_lstm_layers=curr_num_layers, num_epochs=curr_num_epochs,
-                                 learning_rate=curr_lr)
+                                stride=curr_stride, hidden_dim=curr_hidden_dim,
+                                num_lstm_layers=curr_num_layers, num_epochs=curr_num_epochs,
+                                learning_rate=curr_lr)
             mdl.to(device)
             history = mdl.fit_cv(train_loader, valid_X, valid_y, device)
             pred_y = mdl.predict(valid_X, device)
@@ -339,7 +353,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-
+# set the seed to gauarantee for each validation set the hyperparameters are shown in the same sequence
 seed(314)
 
 # param_grid = cfg_target.param_grid_en_de
@@ -367,7 +381,7 @@ elif model_name == 'CNN_FNN':
     param_grid = cfg_target.param_grid_cnn_fnn
 elif model_name == 'CNN_LSTM':
     param_grid = cfg_target.param_grid_cnn_lstm
-elif model_name in ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']:
+elif model_name in ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR', 'EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']:
     param_grid = cfg_target.param_grid_en_de
 else:
     print('can not find the model')

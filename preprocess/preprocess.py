@@ -19,8 +19,6 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 
-
-
 def load_results(filename):
 
     """ Load a pickle file
@@ -41,18 +39,14 @@ def save_results(rootpath, filename, results):
     if not os.path.exists(rootpath):
         os.makedirs(rootpath)
 
-
-
-    with open(rootpath+filename, 'wb') as file_to_save:
+    with open(rootpath + filename, 'wb') as file_to_save:
         pickle.dump(results, file_to_save)
-
 
 
 ########## Code to perform Principal Component Analysis (PCA) on a covariate ###################
 
 
 def do_pca_on_covariate(df_train, df_test, n_components=10, location='pacific', var_id='sst'):
-
 
     """ Do PCA: learn PC loadings from training data,
                 and project test data onto corresponding directions
@@ -72,19 +66,18 @@ def do_pca_on_covariate(df_train, df_test, n_components=10, location='pacific', 
 
     """
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(df_train, pd.DataFrame):
 
         if isinstance(df_train, pd.Series):
-            df_train = df_train.to_frame() # convert pd.series to pd.dataframe
+            df_train = df_train.to_frame()  # convert pd.series to pd.dataframe
         else:
             raise ValueError("Training data needs to be a pandas dataframe")
-
 
     if not isinstance(df_test, pd.DataFrame):
 
         if isinstance(df_test, pd.Series):
-            df_test = df_test.to_frame() # convert pd.series to pd.dataframe
+            df_test = df_test.to_frame()  # convert pd.series to pd.dataframe
         else:
             raise ValueError("Test data needs to be a pandas dataframe")
 
@@ -92,23 +85,23 @@ def do_pca_on_covariate(df_train, df_test, n_components=10, location='pacific', 
 
     if len(df_train.index.names) < 3 or len(df_test.index.names) < 3:
         raise ValueError("Multiindex dataframe includes 3 levels: [lat,lon,start_date]")
-        
+
     # flatten the dataframe such that the number of
     # samples equals the number of dates in the dataframe
-    # and the number of features equals to lat x lon 
+    # and the number of features equals to lat x lon
     df_train_flat = df_train.unstack(level=[0, 1])
     df_test_flat = df_test.unstack(level=[0, 1])
     x_train = df_train_flat.to_numpy()
     x_test = df_test_flat.to_numpy()
-    
+
     # make sure no NAN
     if np.isnan(x_train).sum() > 0:
         np.nan_to_num(x_train, 0)
 
     if np.isnan(x_test).sum() > 0:
-        np.nan_to_num(x_test, 0)    
+        np.nan_to_num(x_test, 0)
 
-    # Initialize the PCA model such that it will reture the top n_components 
+    # Initialize the PCA model such that it will reture the top n_components
     pca = PCA(n_components=n_components)
 
     # Fit the model with Xtrain and apply the dimensionality reduction on Xtrain.
@@ -130,15 +123,12 @@ def do_pca_on_covariate(df_train, df_test, n_components=10, location='pacific', 
     return(df1, df2)
 
 
-
 def get_pca_from_covariate(rootpath,
                            data,
                            var_name, var_location,
                            train_start, train_end,
                            test_start, test_end,
                            n_components=10):
-
-
 
     """ Apply PCA on spatial-temporal Climate variables (Covariates),
         e.g., Sea surface temperature (SST)
@@ -155,23 +145,21 @@ def get_pca_from_covariate(rootpath,
     """
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(data, pd.DataFrame):
 
         if isinstance(data, pd.Series):
-            data = data.to_frame() # convert pd.series to pd.dataframe
+            data = data.to_frame()  # convert pd.series to pd.dataframe
         else:
             raise ValueError("Covariate needs to be a pandas multiindex dataframe")
 
     # check if the train start date and the train end date is out of range
 
     if train_start < data.index.get_level_values('start_date')[0]:
-        raise ValueError("Train start date is out of range!")        
-
+        raise ValueError("Train start date is out of range!")
 
     if train_end > data.index.get_level_values('start_date')[-1]:
         raise ValueError("Train end date is out of range!")
-
 
     # check if the test start date and the test end date is out of range
     if test_start < train_start:
@@ -180,18 +168,14 @@ def get_pca_from_covariate(rootpath,
     if test_end < train_end or test_end > data.index.get_level_values('start_date')[-1]:
         raise ValueError("Test end date is out of range!")
 
-
-
     print('create training-test split')
     train_x = data.loc[idx[:, :, train_start:train_end], :]
     test_x = data.loc[idx[:, :, test_start:test_end], :]
-
 
     # start PCA
     print('start pca')
     train_x_pca, test_x_pca = do_pca_on_covariate(train_x[var_name], test_x[var_name],
                                                   n_components, var_location, var_name)
-
 
     # save PCA data
     all_x_pca = train_x_pca.append(test_x_pca)
@@ -199,6 +183,7 @@ def get_pca_from_covariate(rootpath,
                      key=var_name, mode='w')
 
 ########## Code to perform z-score on a time-series using long-term mean and std ############################
+
 
 def get_mean(df1, var_id='tmp2m', date_id='start_date'):
 
@@ -215,7 +200,6 @@ def get_mean(df1, var_id='tmp2m', date_id='start_date'):
     indexnames = df1.index.names
     idxlevel = indexnames.index(date_id)
 
-
     df1 = df1.assign(month=df1.index.get_level_values(idxlevel).month)
     df1 = df1.assign(day=df1.index.get_level_values(idxlevel).day)
 
@@ -223,8 +207,9 @@ def get_mean(df1, var_id='tmp2m', date_id='start_date'):
     df1['{}_daily_mean'.format(var_id)] = df1.groupby(['month', 'day'])[var_id].transform('mean')
     # get std of each date
     df1['{}_daily_std'.format(var_id)] = df1.groupby(['month', 'day'])[var_id].transform('std')
-  
+
     return df1.fillna(0)
+
 
 def add_month_day(df1, date_id='start_date'):
 
@@ -252,8 +237,7 @@ def zscore_temporal(rootpath,
                     test_start='2017-01-01', test_end='2018-12-31',
                     date_id='start_date'):
 
-
-    """ Do zscore on time series only (no spatial information), e.g., pca of a covariate 
+    """ Do zscore on time series only (no spatial information), e.g., pca of a covariate
     Args:
             rootpath: directory to save the results
             data: pd.Dataframe -- dataframe contains data that is about to apply zscore
@@ -264,7 +248,7 @@ def zscore_temporal(rootpath,
 
     """
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(data, pd.DataFrame) and not isinstance(data, pd.Series):
         raise ValueError("Data needs to be a pandas dataframe/series.")
 
@@ -274,18 +258,13 @@ def zscore_temporal(rootpath,
 
     print('pre-process: {}'.format(var))
 
-    
-    df1 = target.loc[idx[train_start:train_end], :]# train
-    df2 = target.loc[idx[test_start:test_end], :]# test
-
-
+    df1 = target.loc[idx[train_start:train_end], :]  # train
+    df2 = target.loc[idx[test_start:test_end], :]  # test
 
     df1 = get_mean(df1, var)
-    #  get first element of each group: mean for each location each month-day 
-    month_day = df1.groupby(['month', 'day']).first() 
+    #  get first element of each group: mean for each location each month-day
+    month_day = df1.groupby(['month', 'day']).first()
     month_day = month_day.reset_index()
-
-
 
     # add month-day column to second dataframe
     df2 = add_month_day(df2)
@@ -294,22 +273,17 @@ def zscore_temporal(rootpath,
     var_cols = ['{}_daily_{}'.format(var, col_type) for col_type in ['mean', 'std']]
 
     # add mean and std get from df1
-    df2 = df2.merge(month_day[['month', 'day']+var_cols], how='left', on=['month', 'day'])
-
+    df2 = df2.merge(month_day[['month', 'day'] + var_cols], how='left', on=['month', 'day'])
 
     df2 = df2.sort_values(by=[date_id])
-    df2 = df2.set_index([date_id]) # add multi-index back
+    df2 = df2.set_index([date_id])  # add multi-index back
 
-
-    df1[var+'_zscore'] = (df1[var]- df1['{}_daily_mean'.format(var)])/df1['{}_daily_std'.format(var)]
-    df2[var+'_zscore'] = (df2[var]- df2['{}_daily_mean'.format(var)])/df2['{}_daily_std'.format(var)]
-
-
+    df1[var + '_zscore'] = (df1[var] - df1['{}_daily_mean'.format(var)]) / df1['{}_daily_std'.format(var)]
+    df2[var + '_zscore'] = (df2[var] - df2['{}_daily_mean'.format(var)]) / df2['{}_daily_std'.format(var)]
 
     df_all = df1.append(df2)
 
     df_all.to_hdf(rootpath + '{}_zscore.h5'.format(var), key=var, mode='w')
-
 
 
 def zscore_spatial_temporal(rootpath,
@@ -342,8 +316,8 @@ def zscore_spatial_temporal(rootpath,
     # Add 'month', 'day' column, and get mean and std of each date, each location
     df1 = df1.groupby(['lat', 'lon']).apply(lambda df: get_mean(df, var_id, date_id))
 
-    #  get first element of each group: mean for each location each month-day 
-    month_day = df1.groupby(['lat', 'lon', 'month', 'day']).first() 
+    #  get first element of each group: mean for each location each month-day
+    month_day = df1.groupby(['lat', 'lon', 'month', 'day']).first()
     month_day = month_day.reset_index()
 
     # add month-day column to second dataframe
@@ -411,7 +385,7 @@ def create_sequence_custom(today, time_frame, covariate_map, past_years=2,
 
     agg_x = covariate_map[location.values].squeeze()
 
-    return agg_x 
+    return agg_x
 
 
 def get_test_train_index_seasonal(test_start, test_end, train_range=10, past_years=2, gap=28):
@@ -431,22 +405,22 @@ def get_test_train_index_seasonal(test_start, test_end, train_range=10, past_yea
             train_start_shift:pd.Timestamp() -- new start date for training
                                                 after including # of years in the past
             train_time_index: list of pd.Timestamp() -- time index for training set
-            
-    """    
+
+    """
 
     test_start_shift = test_start - pd.DateOffset(years=train_range + past_years, days=gap)
-    
+
 
     # handles the train time indices
     # you need to gap 28 days to predict Feb-01 standing on Jan-03
     train_end = test_start - pd.DateOffset(days=gap)
     # train starts 10 years before the end date
     train_start = train_end - pd.DateOffset(years=train_range)
-    
-    # shift another two years to create the sequence
-    train_start_shift = train_start- pd.DateOffset(years=past_years, days=gap) 
 
-    train_time_index = pd.date_range(train_start, train_end) 
+    # shift another two years to create the sequence
+    train_start_shift = train_start- pd.DateOffset(years=past_years, days=gap)
+
+    train_time_index = pd.date_range(train_start, train_end)
 
     return test_start_shift, train_start_shift, train_time_index
 
@@ -475,11 +449,11 @@ def train_val_split_target(rootpath,
 
     """
 
-    
+
 
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(target, pd.DataFrame):
 
         if isinstance(target, pd.Series):
@@ -540,7 +514,7 @@ def train_val_split_covariate(rootpath,
 
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(data, pd.DataFrame):
 
         if isinstance(data, pd.Series):
@@ -559,7 +533,7 @@ def train_val_split_covariate(rootpath,
     test_start = pd.Timestamp('{}-{:02d}-01'.format(val_year, val_month), freq='D')
     test_end = test_start + pd.DateOffset(days=test_range)
     #[test_start,test_end]
-    test_time_index = pd.date_range(test_start, test_end, freq=test_freq) 
+    test_time_index = pd.date_range(test_start, test_end, freq=test_freq)
 
     test_start_shift, train_start_shift, train_time_index = get_test_train_index_seasonal(test_start,
                                                                                           test_end,
@@ -569,18 +543,18 @@ def train_val_split_covariate(rootpath,
 
     train_x_norm = data.loc[idx[train_start_shift:train_end], :]
     test_x_norm = data.loc[idx[test_start_shift:test_end], :]
-    
-    time_index1 = pd.date_range(train_start_shift, train_end) 
-    time_index2 = pd.date_range(test_start_shift, test_end) 
+
+    time_index1 = pd.date_range(train_start_shift, train_end)
+    time_index2 = pd.date_range(test_start_shift, test_end)
 
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
     df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
 
     # to aggregate features for covariates
     train_x = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df1['pos'],
-                                                                                 train_x_norm.values) for date in train_time_index)) 
+                                                                                 train_x_norm.values) for date in train_time_index))
     test_x = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df2['pos'],
-                                                                                test_x_norm.values) for date in test_time_index)) 
+                                                                                test_x_norm.values) for date in test_time_index))
 
     #print(train_X.shape,test_X.shape)
 
@@ -651,7 +625,7 @@ def train_test_split_target(rootpath,
 
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(target, pd.DataFrame):
 
         if isinstance(target, pd.Series):
@@ -720,7 +694,7 @@ def train_test_split_covariate(rootpath,
 
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(data, pd.DataFrame):
 
         if isinstance(data, pd.Series):
@@ -745,15 +719,15 @@ def train_test_split_covariate(rootpath,
                                                                                           train_range=train_range,
                                                                                           past_years=past_years)
     train_end = train_time_index[-1]
-        
+
 
 
 
     train_x_norm = data.loc[idx[train_start_shift:train_end], :]
     test_x_norm = data.loc[idx[test_start_shift:test_end], :]
-    
-    time_index1 = pd.date_range(train_start_shift, train_end) 
-    time_index2 = pd.date_range(test_start_shift, test_end) 
+
+    time_index1 = pd.date_range(train_start_shift, train_end)
+    time_index2 = pd.date_range(test_start_shift, test_end)
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
     df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
 
@@ -795,7 +769,7 @@ def train_test_split(rootpath,
             n_jobs: int -- number of workers for parallel
     """
 
-    
+
 
     train_test_split_covariate(rootpath, data, test_time_index_all,
                                test_year, test_month, train_range, past_years, n_jobs)
@@ -837,7 +811,7 @@ def train_test_split_target_ar(rootpath,
     test_start_shift, train_start_shift, train_time_index = get_test_train_index_seasonal(test_start,
                                                                                           test_end,
                                                                                           train_range=train_range,
-                                                                                          past_years=past_years) 
+                                                                                          past_years=past_years)
     train_end = train_time_index[-1]
 
 
@@ -855,7 +829,7 @@ def train_test_split_target_ar(rootpath,
 
     # aggragate data into sequence #
     # multi-index dataframe with lat,lon, start_date
-    time_index1 = train_y_norm.index.get_level_values('start_date') 
+    time_index1 = train_y_norm.index.get_level_values('start_date')
     time_index2 = test_y_norm.index.get_level_values('start_date')
     # training index
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)
@@ -865,7 +839,7 @@ def train_test_split_target_ar(rootpath,
     train_y = np.asarray(Parallel(n_jobs=16)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
                                              for date in train_time_index))
     test_y = np.asarray(Parallel(n_jobs=16)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
-                                            for date in test_time_index)) 
+                                            for date in test_time_index))
 
     train_y = np.swapaxes(train_y, 1, 2)
     test_y = np.swapaxes(test_y, 1, 2)
@@ -874,7 +848,7 @@ def train_test_split_target_ar(rootpath,
     test_y = test_y[:, :, :-1]
 
     print(train_y.shape, test_y.shape)
-   
+
 
     save_results(rootpath, 'train_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), train_y)
     save_results(rootpath, 'test_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), test_y)
@@ -932,7 +906,7 @@ def one_day2map(one_day, var, lon_min, lat_min, temp_map):
 
 
 
-    
+
 
 def apply_parallel(df_grouped, func, num_cores=cpu_count(), **kwargs):
 
@@ -980,7 +954,7 @@ def convert_covariate_to_map(df_covaraiate, var='sst', num_cores=16):
             var: str -- covariate name, choose from: 'sst', 'hgt500', 'slp', 'rhum500',
                                                      'tmp2m','precip', 'sm',
                                                      'hgt10','hgt200','hgt700','rhum.sig995'
-            num_cores: int -- number of cores for parallel 
+            num_cores: int -- number of cores for parallel
 
     Returns:
 
@@ -1010,23 +984,23 @@ def get_test_train_index_map(test_start, test_end, train_range=10, past_years=0)
             train_start_shift:pd.Timestamp() -- new start date for training
                                                 after including # of years in the past
             train_time_index: list of pd.Timestamp() -- time index for training set
-            
-    """    
+
+    """
 
 
     #print(test_start,test_end,train_range,past_years)
 
     test_start_shift = test_start - pd.DateOffset(years=train_range + past_years, days=28)
-    
+
 
     # handles the train time indices
     train_end = test_start - pd.DateOffset(days=28) # you need to gap 28 days to predict Feb-01 standing on Jan-03
     train_start = train_end - pd.DateOffset(years=train_range) # train starts from 10 years before the end date
-    
+
 
     train_start_shift = train_start - pd.DateOffset(years=past_years, days=28) # shift another two years to create the sequence
 
-    train_time_index = pd.date_range(train_start, train_end) 
+    train_time_index = pd.date_range(train_start, train_end)
 
 
     return test_start_shift, train_start_shift, train_time_index
@@ -1068,8 +1042,8 @@ def zscore_spatial_temporal_map(rootpath,
     # Add 'month', 'day' column, and get mean and std of each date, each location
     df1 = df1.groupby(['lat', 'lon']).apply(lambda df: get_mean(df, var_id, date_id))
 
-    #  get first element of each group: mean for each location each month-day 
-    month_day = df1.groupby(['lat', 'lon', 'month', 'day']).first() 
+    #  get first element of each group: mean for each location each month-day
+    month_day = df1.groupby(['lat', 'lon', 'month', 'day']).first()
     month_day = month_day.reset_index()
 
     # add month-day column to second dataframe
@@ -1132,7 +1106,7 @@ def train_val_split_map(rootpath,
     test_start = pd.Timestamp('{}-{:02d}-01'.format(val_year, val_month), freq='D')
     test_end = test_start + pd.DateOffset(days=test_range)
     #[test_start,test_end]
-    test_time_index = pd.date_range(test_start, test_end, freq=test_freq) 
+    test_time_index = pd.date_range(test_start, test_end, freq=test_freq)
 
     test_start_shift, train_start_shift, train_time_index = get_test_train_index_map(test_start,
                                                                                      test_end,
@@ -1144,15 +1118,15 @@ def train_val_split_map(rootpath,
     train_x = []
     val_x = []
 
-    #time_index1 = pd.date_range(train_start_shift, train_end) 
-    #time_index2 = pd.date_range(test_start_shift, test_end) 
+    #time_index1 = pd.date_range(train_start_shift, train_end)
+    #time_index2 = pd.date_range(test_start_shift, test_end)
     #df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
     #df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
 
 
     for var, location in zip(var_names, var_locations):
         #covariate: a list with two element [i][0]: covariate_map; [i][1]: corresponding time stamp
-        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location)) 
+        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location))
 
         #convert covariate_map into a numpy array: # samples x W x H
         covariate_map = np.asarray([covariate[i][0] for i in range(len(covariate))])
@@ -1168,7 +1142,7 @@ def train_val_split_map(rootpath,
 
         temp_val_x = (torch.as_tensor(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df_time['pos'], covariate_map, 0)
                                                               for date in test_time_index)).float().unsqueeze(1))
-    
+
         train_x.append(temp_train_x)
         val_x.append(temp_val_x)
 
@@ -1222,22 +1196,22 @@ def train_test_split_map(rootpath,
                                                                                      train_range=train_range,
                                                                                      past_years=past_years)
     train_end = train_time_index[-1]
-        
+
 
 
 
     train_x = []
     test_x = []
-    
-    #time_index1 = pd.date_range(train_start_shift, train_end) 
-    #time_index2 = pd.date_range(test_start_shift, test_end) 
+
+    #time_index1 = pd.date_range(train_start_shift, train_end)
+    #time_index2 = pd.date_range(test_start_shift, test_end)
     #df1 = pd.DataFrame(data = {'pos':np.arange(len(time_index1))},index=time_index1)# training index
     #df2 = pd.DataFrame(data = {'pos':np.arange(len(time_index2))},index=time_index2)
 
 
     for var, location in zip(var_names, var_locations):
         #covariate: a list with two element [i][0]: covariate_map; [i][1]: corresponding time stamp
-        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location)) 
+        covariate = load_results(rootpath + '{}_{}_map.pkl'.format(var, location))
 
         #convert covariate_map into a numpy array: # samples x W x H
         covariate_map = np.asarray([covariate[i][0] for i in range(len(covariate))])
@@ -1261,8 +1235,3 @@ def train_test_split_map(rootpath,
         print(temp_train_x.shape, temp_test_x.shape)
 
     return train_x, test_x
-
-
-
-
-

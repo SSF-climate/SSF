@@ -1,3 +1,6 @@
+"""
+Run models in config file for test set with the best hyperparameter selected based on the validation sets
+"""
 import os
 import cfg_target
 import pickle
@@ -6,9 +9,7 @@ from utils import *
 import argparse
 import evaluation
 
-# from random_cv import best_hyperparameter
-
-model_names = ['FNN']#cfg_target.model_names  # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
+model_names = cfg_target.model_names  # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 test_years = cfg_target.test_years  # [2017, 2018]
 month_range = cfg_target.month_range
 rootpath = cfg_target.forecast_rootpath

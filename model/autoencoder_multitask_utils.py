@@ -6,6 +6,89 @@ import torch.nn as nn
 import torch
 import numpy as np
 
+
+class MapDataset_quad(Dataset):
+    """
+    X: of size [num_samples, num_features], is the covariates matrix
+    y: of size [num_samples,num_locations], is the target variable, which has the same length as each element in X
+    C: of size [num_samples, num_locations, num_locations], is the covariance/correlation matrix among all locations.
+    """
+    def __init__(self, X, y, C):
+        self.data = X
+        self.labels = y
+        self.cov = C
+        self.num_var = len(X)
+
+    def __len__(self):
+        return len(self.labels)  # of how many examples you have
+
+    def __getitem__(self, index):
+        return self.data[index], self.labels[index], self.cov[index]
+
+
+class MapDataset(Dataset):
+    """
+    X: of size [num_samples, num_features], is the covariates matrix
+    y: of size [num_samples,num_locations], is the target variable, which has the same length as each element in X
+    """
+    def __init__(self, X, y):
+        self.data = X
+        self.labels = y
+
+    def __len__(self):
+        return len(self.labels)  # of how many examples(images?) you have
+
+    def __getitem__(self, index):
+        return self.data[index], self.labels[index]
+
+
+class MapDataset_ar(Dataset):
+    """
+        x1: of size [num_samples, num_features], is the covariates matrix
+        x2: a list of historical target variable for autoregression
+        y: of size [num_samples,num_locations], is the target variable, which has the same length as each element in X
+    """
+    def __init__(self, x1, x2, y):
+        self.data = x1
+        self.target = x2
+        self.labels = y
+
+    def __len__(self):
+        return len(self.labels)  # of how many examples(images?) you have
+
+    def __getitem__(self, index):
+        return self.data[index], self.target[index], self.labels[index]
+
+
+class MapDataset_CNN(Dataset):
+    """
+    X: a list containing covariates' map, len(X) = num_variables,
+    y: of size [num_samples,num_locations], is the target variable, which has the same length as each element in X
+    """
+    def __init__(self, X, y):
+        self.data = X
+        self.labels = y
+        self.num_var = len(X)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        var = []
+        for i in range(self.num_var):
+            var.append(self.data[i][index])
+        return var, self.labels[index]
+
+
+def init_weight(mdl):
+    """Initalize the weights for each deep learning model
+    Args:
+    mdl: a deep learning model
+    """
+    for name, param in mdl.named_parameters():
+        if 'weight' in name:
+            param = nn.init.xavier_uniform_(param, gain=nn.init.calculate_gain('relu'))
+
 # define quadratic loss: y^T*C*y
 
 
@@ -39,81 +122,3 @@ def epsilon_loss(target, prediction, epsilon):
     res[loc_minus] = res.clone()[loc_minus] + epsilon  # if res<-epsilon, then res = res+epsilon
 
     return torch.mean(res**2)
-
-
-class MapDataset_quad(Dataset):
-    """
-    X: of isze [num_samples, num_features], is the covariates matrix
-    y: of size [num_samples,num_locations], is the target variable, which has the same length as each element in X
-    C: of size [num_samples, num_locations, num_locations], is the covariance/correlation matrix among all locations.
-    """
-    def __init__(self, X, y, C):
-        self.data = X
-        self.labels = y
-        self.cov = C
-        self.num_var = len(X)
-
-    def __len__(self):
-        return len(self.labels)  # of how many examples you have
-
-    def __getitem__(self, index):
-        return self.data[index], self.labels[index], self.cov[index]
-
-
-class MapDataset(Dataset):
-    """
-    X: a list containing covariates' map, len(X) = num_variables,
-    y: of size [num_samples,1], is the target variable, which has the same length as each element in X
-    """
-    def __init__(self, X, y):
-        self.data = X
-        self.labels = y
-
-    def __len__(self):
-        return len(self.labels)  # of how many examples(images?) you have
-
-    def __getitem__(self, index):
-        return self.data[index], self.labels[index]
-
-
-class MapDataset_ar(Dataset):
-    """
-        x1: a list containing covariates' map, len(X) = num_variables,
-        x2: a list of historical target variable for autoregression
-        y: of size [num_samples,1], is the target variable, which has the same length as each element in X
-    """
-    def __init__(self, x1, x2, y):
-        self.data = x1
-        self.target = x2
-        self.labels = y
-
-    def __len__(self):
-        return len(self.labels)  # of how many examples(images?) you have
-
-    def __getitem__(self, index):
-        return self.data[index], self.target[index], self.labels[index]
-
-
-class MapDataset_CNN(Dataset):
-  """
-  """
-  def __init__(self, X,y):
-      #print([X,y])
-        self.data = X
-        self.labels = y
-        self.num_var = len(X)
-        
-  def __len__(self):
-      return len(self.labels) # of how many examples(images?) you have
-
-  def __getitem__(self, index):
-      var = []
-      for i in range(self.num_var):
-          var.append(self.data[i][index])
-      return var,self.labels[index]
-      
-def init_weight(mdl):
-
-    for name, param in mdl.named_parameters():
-        if 'weight' in name:
-            param = nn.init.xavier_uniform_(param, gain=nn.init.calculate_gain('relu'))
