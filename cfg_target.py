@@ -20,15 +20,15 @@ operation = 'mean'  # 'compute the summation or average over the forecast range
 save_target = True  # 'flag to indicate weather to save shifted target
 
 
-train_start_date = '2010-01-01'   # 'Set the start date for training'
+train_start_date = '1990-01-01'   # 'Set the start date for training'
 train_end_date = '2016-12-31'     # Set the end date for training set
 test_start_date = '2017-01-01'   # 'Set the end date for training'
-end_date = '2017-12-31'   # 'Set the end date for whole dataset'
+end_date = '2018-12-31'   # 'Set the end date for whole dataset'
 
 # spatial temporal covariate variables
-covariates_us = []  # ['tmp2m','precip']
-covariates_global = []  # ['hgt500','slp','rhum500'] #'spatial-temporal covariates on land.'
-covariates_sea = []  # ['sst'] #'spatial-temporal covariates over ocean.'
+covariates_us = ['tmp2m','precip']
+covariates_global = ['hgt500','slp','rhum500'] #'spatial-temporal covariates on land.'
+covariates_sea =  ['sst'] #'spatial-temporal covariates over ocean.'
 pacific_atlantic = True
 
 
@@ -45,12 +45,12 @@ lon_range_sea = [120, 340]  # longitude range for covariates')
 
 
 # spatial variable
-add_spatial = True  # 'flag to indicate adding spatial features: may not need this flag
+# add_spatial = True  # 'flag to indicate adding spatial features: may not need this flag
 spatial_set = ['elevation']  # spatial variables
 
 # temporal variable
-add_temporal = True  # 'flag to indicate adding temporal features: may not need
-temporal_set = ['mei', 'nao', 'nino3', 'nino3.4', 'nino1+2']  # 'temporal variable(s)
+# add_temporal = True  # 'flag to indicate adding temporal features: may not need
+temporal_set = ['mei', 'nao', 'nino3', 'nino4', 'nino3.4', 'nino1+2']  # 'temporal variable(s)
 
 save_cov = True    # flag to indicate weather to save covariance
 
@@ -131,12 +131,12 @@ param_grid_cnn_fnn = {'kernel_size': [9, 13, 15],
                       'hidden_dim': [50, 100, 200],
                       'num_layers': [2, 4]}
 
-num_random = 4
+num_random = 30
 
-month_range = [1]
-model_names = ['CNN_FNN', 'CNN_LSTM']  # ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM']
-# ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
+month_range = list(range(1,13))
+model_names = ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM', 'EncoderFNN_AllSeq_AR_CI',
+               'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 cv_metric = 'cos'
 one_day = True
-num_rep = 3
+num_rep = 10
