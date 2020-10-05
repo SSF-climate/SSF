@@ -20,37 +20,37 @@ operation = 'mean'  # 'compute the summation or average over the forecast range
 save_target = True  # 'flag to indicate weather to save shifted target
 
 
-train_start_date = '1990-01-01'   # 'Set the start date for training'
+train_start_date = '1990-01-01'   # Set the start date for training
 train_end_date = '2016-12-31'     # Set the end date for training set
-test_start_date = '2017-01-01'   # 'Set the end date for training'
-end_date = '2018-12-31'   # 'Set the end date for whole dataset'
+test_start_date = '2017-01-01'   # Set the end date for training'
+end_date = '2018-12-31'   # Set the end date for whole dataset'
 
 # spatial temporal covariate variables
 covariates_us = ['tmp2m','precip']
-covariates_global = ['hgt500','slp','rhum500'] #'spatial-temporal covariates on land.'
-covariates_sea =  ['sst'] #'spatial-temporal covariates over ocean.'
+covariates_global = ['hgt500','slp','rhum500'] # spatial-temporal covariates on land.
+covariates_sea =  ['sst'] # spatial-temporal covariates over ocean.
 pacific_atlantic = True
 
 
 
 
-lat_range_global = [0, 50.0]   # 'latitude range for covariates')
-lon_range_global = [120, 340]   # 'longitude range for covariates')
+lat_range_global = [0, 50.0]   # latitude range for covariates
+lon_range_global = [120, 340]   # longitude range for covariates
 
-lat_range_us = [25.1, 48.9]  # 'latitude range for covariates')
-lon_range_us = [235.7, 292.8]  # 'longitude range for covariates')
+lat_range_us = [25.1, 48.9]  # latitude range for covariates
+lon_range_us = [235.7, 292.8]  # longitude range for covariates
 
-lat_range_sea = [0, 50]  # latitude range for covariates')
-lon_range_sea = [120, 340]  # longitude range for covariates')
+lat_range_sea = [0, 50]  # latitude range for covariates
+lon_range_sea = [120, 340]  # longitude range for covariates
 
 
 # spatial variable
-# add_spatial = True  # 'flag to indicate adding spatial features: may not need this flag
+# add_spatial = True  # flag to indicate adding spatial features: may not need this flag
 spatial_set = ['elevation']  # spatial variables
 
 # temporal variable
-# add_temporal = True  # 'flag to indicate adding temporal features: may not need
-temporal_set = ['mei', 'nao', 'nino3', 'nino4', 'nino3.4', 'nino1+2']  # 'temporal variable(s)
+# add_temporal = True  # flag to indicate adding temporal features: may not need
+temporal_set = ['mei', 'nao', 'nino3', 'nino4', 'nino3.4', 'nino1+2']  # temporal variable(s)
 
 save_cov = True    # flag to indicate weather to save covariance
 
@@ -95,9 +95,9 @@ past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 # param_grid for encoder decoder model
 param_grid_en_de = {'hidden_dim': [10, 20, 40, 60, 150, 200],
                     'num_layers': [2, 3, 4, 5, 6],
-                    'learning_rate': [0.05, 0.01, 0.005, 0.001],
+                    'learning_rate': [0.005, 0.001],
                     'threshold': [0.5, 0.6],
-                    'num_epochs': [20, 50],  # [100, 200, 300],
+                    'num_epochs': [100, 200, 300],
                     'decoder_len': [4, 11, 18],
                     'last_layer': [True, False],
                     'seq_len': [4, 11, 18],
