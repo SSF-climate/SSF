@@ -23,7 +23,7 @@ The code is compatible with Python 3.6 and the following packages:
     1. Execute load_data.py to load the subset of data needed in generating forecasts
     2. Execute run_preprocess.py to preprocess covariates and target variable separately
     3. Execute create_covariates_pca.py to concatenate data
-    4. Execute create_train_validation_sets.py and create_train_test_sets.py to create training-validation sets and training-test sets
+    4. Execute create_datasets.py to create training-validation sets and training-test sets
 6. Hyperparameter tuning: execute run_random_search.py to find the best parameter by random search
 7. Generate forecasts: execute main_experiments.py to train all the models and generate forecasts on test sets
 8. Evaluate forecasts: execute run_evaluation.py to evalute the forecasting performance on both training and test sets
@@ -36,8 +36,7 @@ The code is compatible with Python 3.6 and the following packages:
 - load_data: script for a subset of data required by configure file (cfg_target.py)
 - run_preprocess.py: script for data preprocessing
 - create_covariates_pca.py: script for concatenating PCs from all climate variables (covariates)
-- create_train_test_sets.py: script for creating training and test sets
-- create_train_validation_sets.py: script for creating training and validation sets
+- create_datasets.py: script for creating training-validation sets and training-test sets
 - run_random_cv.py: script for hyperparameter tuning
 - main_experiments: script for runing experiments for all models on training and test sets
 - run_evaluation.py: script for evaluate the performance of forecasting models on training and test sets
