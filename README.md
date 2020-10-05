@@ -4,3 +4,6 @@ Code for data extraction, preprocessing, and SSF model training and evaluation u
 
 ## Environment and packages
 The code was tested using Python 3.6 with the following Python 3.6 packages:
+
+
+## Getting started
