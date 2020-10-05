@@ -7,8 +7,8 @@ import os
 
 var_locations = cfg.locations
 var_names = cfg.vars
-exe_cov_file = 'preprocess_covariate.py'
-exe_target_file = 'preprocess_target.py'
+exe_cov_file = 'preprocess/preprocess_covariate.py'
+exe_target_file = 'preprocess/preprocess_target.py'
 
 # to preprocess spatiotemporal covariates
 for var_name, var_location in zip(var_names, var_locations):
@@ -22,3 +22,4 @@ for var_name, var_location in zip(var_names, var_locations):
 cmd = "{} {}".format("python3", exe_target_file)
 print(cmd)
 os.system(cmd)
+
