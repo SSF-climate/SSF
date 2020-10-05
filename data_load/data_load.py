@@ -513,7 +513,7 @@ class DataLoader(object):
             target = self.shift_target(target, self.target_lat, self.target_lon, self.target_variable, self.shift_days, self.forecast_range, self.operation)
 
         if self.save_target is True:
-            target.to_hdf('target.h5', key='target', mode='w')
+            target.to_hdf(self.path + 'target.h5', key='target', mode='w')
             print('target data saved')
         return target
 
@@ -532,7 +532,7 @@ class DataLoader(object):
             us_land_spatial_range = self.remove_masked_data('us', self.lat_range_us, self.lon_range_us, self.path)
             covariates_us = self.get_covariates_data_parallel_updated(train_date_start, target_end_date, self.covariate_set_us, us_land_spatial_range, self.path)
             if self.save_cov is True:
-                covariates_us.to_hdf('covariates_us.h5', key='covariates_us', mode='w')
+                covariates_us.to_hdf(self.path + 'covariates_us.h5', key='covariates_us', mode='w')
         else:
             covariates_us = None
         toc = timeit.default_timer()
@@ -543,7 +543,7 @@ class DataLoader(object):
             spatial_range_global = self.remove_masked_data('all', self.lat_range_global, self.lon_range_global, self.path)
             covariates_global = self.get_covariates_data_parallel_updated(train_date_start, target_end_date, self.covariate_set_global, spatial_range_global, self.path)
             if self.save_cov is True:
-                covariates_global.to_hdf('covariates_global.h5', key='covariates_global', mode='w')
+                covariates_global.to_hdf(self.path + 'covariates_global.h5', key='covariates_global', mode='w')
         else:
             covariates_global = None
         toc = timeit.default_timer()
@@ -559,11 +559,11 @@ class DataLoader(object):
             if self.pacific_atlantic is True:
                 covariates_sea_pacific, covariates_sea_atlantic = split_pacific_atlantic(self.path, covariates_sea)
                 if self.save_cov is True:
-                    covariates_sea_pacific.to_hdf('covariates_pacific.h5', key='covariates_pacific', mode='w')
-                    covariates_sea_atlantic.to_hdf('covariates_atlantic.h5', key='covariates_atlantic', mode='w')
+                    covariates_sea_pacific.to_hdf(self.path + 'covariates_pacific.h5', key='covariates_pacific', mode='w')
+                    covariates_sea_atlantic.to_hdf(self.path + 'covariates_atlantic.h5', key='covariates_atlantic', mode='w')
             else:
                 if self.save_cov is True:
-                    covariates_sea.to_hdf('covariates_sea.h5', key='covariates_sea', mode='w')
+                    covariates_sea.to_hdf(self.path + 'covariates_sea.h5', key='covariates_sea', mode='w')
         else:
             covariates_sea = None
 
@@ -574,7 +574,7 @@ class DataLoader(object):
             # spatial_covariates is not multiindexed, add following
             spatial_covariates.set_index(['lat', 'lon'], inplace=True)
             if self.save_cov is True:
-                spatial_covariates.to_hdf('spatial_covariates.h5', key='spatial_covariates', mode='w')
+                spatial_covariates.to_hdf(self.path + 'spatial_covariates.h5', key='spatial_covariates', mode='w')
         else:
             spatial_covariates = None
 
@@ -583,7 +583,7 @@ class DataLoader(object):
         if len(self.temporal_set) > 0:
             temporal_covariates = self.create_date_data(self.temporal_set, train_date_start, target_end_date, self.path)
             if self.save_cov is True:
-                temporal_covariates.to_hdf('temporal_covariates.h5', key='temporal_covariates', mode='w')
+                temporal_covariates.to_hdf(self.path + 'temporal_covariates.h5', key='temporal_covariates', mode='w')
         else:
             temporal_covariates = None
         return covariates_us, covariates_sea, covariates_global, spatial_covariates, temporal_covariates

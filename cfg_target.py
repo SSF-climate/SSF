@@ -1,10 +1,10 @@
 import numpy as np
 
 ################### Configuration for Data Loading ################################
-path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
-rootpath_cv = 'test/random_cv/'
-forecast_rootpath = 'test/forecast/'
-param_path = 'test/random_cv/cv_results_test/best_parameter/'
+path = 'data/'
+rootpath_cv = 'data/random_cv/'
+forecast_rootpath = 'data/forecast/'
+param_path = 'data/random_cv/cv_results_test/best_parameter/'
 
 
 # target variables
@@ -30,8 +30,6 @@ covariates_us = ['tmp2m','precip']
 covariates_global = ['hgt500','slp','rhum500'] # spatial-temporal covariates on land.
 covariates_sea =  ['sst'] # spatial-temporal covariates over ocean.
 pacific_atlantic = True
-
-
 
 
 lat_range_global = [0, 50.0]   # latitude range for covariates
@@ -61,16 +59,16 @@ save_cov = True    # flag to indicate weather to save covariance
 ################### Configuration for Dataset ################################
 
 # preprocessing
-rootpath_data = '../../S2S/'
-savepath_data = 'test/'
+rootpath_data = 'data/'
+savepath_data = 'data/'
 vars = ['tmp2m', 'sst']
 locations = ['us', 'atlantic']
 
 num_pcs = 10
 
 # train-validation split
-data_target_file = 'test/target_multitask_zscore.h5'
-data_cov_file = 'test/covariates_all_pc10_nao_nino.h5'
+data_target_file = 'data/target_multitask_zscore.h5'
+data_cov_file = 'data/covariates_all_pc10_nao_nino.h5'
 target_var = 'tmp2m'
 
 val_years = [2016, 2015, 2014, 2013, 2012] # years to create validation sets
