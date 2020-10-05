@@ -101,6 +101,12 @@ def do_pca_on_covariate(df_train, df_test, n_components=10, location='pacific', 
     x_train = df_train_flat.to_numpy()
     x_test = df_test_flat.to_numpy()
     
+    # make sure no NAN
+    if np.isnan(x_train).sum() > 0:
+        np.nan_to_num(x_train, 0)
+
+    if np.isnan(x_test).sum() > 0:
+        np.nan_to_num(x_test, 0)    
 
     # Initialize the PCA model such that it will reture the top n_components 
     pca = PCA(n_components=n_components)
