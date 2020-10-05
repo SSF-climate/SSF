@@ -37,7 +37,7 @@ The code is compatible with Python 3.6 and the following packages:
 - run_preprocess.py: script for data preprocessing
 - create_covariates_pca.py: script for concatenating PCs from all climate variables (covariates)
 - create_datasets.py: script for creating training-validation sets and training-test sets
-- run_random_cv.py: script for hyperparameter tuning
+- run_random_search.py: script for hyperparameter tuning via random search
 - main_experiments: script for runing experiments for all models on training and test sets
 - run_evaluation.py: script for evaluate the performance of forecasting models on training and test sets
 
