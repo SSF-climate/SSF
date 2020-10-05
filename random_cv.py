@@ -346,27 +346,6 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
     save_results(rootpath + 'cv_results_test/cv_results_' + model_name + '_{}_{}.pkl'.format(cv_year, cv_index), cv_results)
 
 
-def best_hyperparameter(val_years, month_range, eval_metrics, model_name, rootpath):
-    for month in month_range:
-        score_all = []
-        for year in val_years:
-            cv_results = load_results(rootpath + 'cv_results_test/cv_results_' + model_name + '_{}_{}.pkl'.format(year, month))
-            score = cv_results['score']
-            score_all.append(score)
-        score_all = np.asarray(score_all).squeeze()
-
-        if eval_metrics == 'cos':
-            best_score = score_all[:, :, 1].mean(axis=0)
-            best_id = np.where(best_score == best_score.max())
-        elif eval_metrics == 'rmse':
-            best_score = score_all[:, :, 0].mean(axis=0)
-            best_id = np.where(best_score == best_score.min())
-
-        best_parameter = cv_results['parameter_all'][best_id[0][0]]
-
-        save_results(rootpath + 'cv_results_test/best_parameter/{}_forecast{}.pkl'.format(model_name, month), best_parameter)
-
-
 # set device for running the code
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
