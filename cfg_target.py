@@ -2,9 +2,11 @@ import numpy as np
 
 ################### Configuration for Data Loading ################################
 path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
-rootpath_cv = '/export/scratch/S2S/random_cv/map/'
-forecast_rootpath = '/export/scratch/S2S/forecast/map/'
+rootpath_cv = 'test/random_cv/'
+forecast_rootpath = 'test/forecast/'
 param_path = '/export/scratch/S2S/random_cv/map/cv_results_test/best_parameter/'
+
+
 # target variables
 target = 'tmp2m'  # target variable: 'tmp2m' or 'precip'
 target_res = 2  # target resolution
@@ -18,8 +20,9 @@ operation = 'mean'  # 'compute the summation or average over the forecast range
 save_target = True  # 'flag to indicate weather to save shifted target
 
 
-train_start_date = '2012-01-01'   # 'Set the start date for training'
-# test_start_date = '2018-01-01'   # 'Set the end date for training'
+train_start_date = '2010-01-01'   # 'Set the start date for training'
+train_end_date = '2016-12-31'     # Set the end date for training set
+test_start_date = '2017-01-01'   # 'Set the end date for training'
 end_date = '2017-12-31'   # 'Set the end date for whole dataset'
 
 # spatial temporal covariate variables
@@ -27,6 +30,7 @@ covariates_us = []  # ['tmp2m','precip']
 covariates_global = []  # ['hgt500','slp','rhum500'] #'spatial-temporal covariates on land.'
 covariates_sea = []  # ['sst'] #'spatial-temporal covariates over ocean.'
 pacific_atlantic = True
+
 
 
 
@@ -53,7 +57,16 @@ save_cov = True    # flag to indicate weather to save covariance
 
 # target_lat = 37.75 # 'latitude range for target variable'
 # target_lon = 237.75 #'longitude range for target variable'
+
 ################### Configuration for Dataset ################################
+
+# preprocessing
+rootpath_data = '../../S2S/'
+savepath_data = 'test/'
+vars = ['tmp2m', 'sst']
+locations = ['us', 'atlantic']
+
+num_pcs = 10
 
 # train-validation split
 data_target_file = 'test/target_multitask_zscore.h5'
@@ -70,7 +83,7 @@ val_freq = '7D' # frequency to generate validation date
 # train-test split
 test_years = [2017, 2018]
 
-test_train_range = 24 # number of years in the training set (train-test split)
+test_train_range = 5 # number of years in the training set (train-test split)
 
 
 past_ndays = 0   # number of days to aggaregate in the past: t-n,...,t-1'
@@ -82,14 +95,14 @@ past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 # param_grid for encoder decoder model
 param_grid_en_de = {'hidden_dim': [10, 20, 40, 60, 150, 200],
                     'num_layers': [2, 3, 4, 5, 6],
-                    'learning_rate': [0.005, 0.001],
+                    'learning_rate': [0.05, 0.01, 0.005, 0.001],
                     'threshold': [0.5, 0.6],
-                    'num_epochs': [100, 200, 300],
+                    'num_epochs': [20, 50],  # [100, 200, 300],
                     'decoder_len': [4, 11, 18],
                     'last_layer': [True, False],
-                    'seq_len': [18],
+                    'seq_len': [4, 11, 18],
                     'linear_dim': [50, 100, 200],
-                    'drop_out': [0, 0.1, 0.2],
+                    'drop_out': [0.1, 0.2],
                     'ci_dim': 8}
 
 # param_grid for XGBoost
