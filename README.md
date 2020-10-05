@@ -17,7 +17,7 @@ The code is compatible with Python 3.6 and the following packages:
 ## Getting started
 1. Clone the repo
 2. Create virtual environments and install the necessary python packages listed above
-3. Load raw data from the google drive folder
+3. Load raw data from the google drive folder and save it in 'data'
 4. Revise configure file (cfg_target.py) to adpat to the required settings
 5. Data loading and preprocessing:
     1. Execute load_data.py to load the subset of data needed in generating forecasts
