@@ -4,7 +4,7 @@ Apply zscoring to spatiotemporal target, e.g., tmp2m
 import sys
 import os
 os.chdir(os.path.join(".."))
-sys.path.insert(0, 'S2S/')
+sys.path.insert(0, 'SSF/')
 import numpy as np
 import pandas as pd
 import preprocess
