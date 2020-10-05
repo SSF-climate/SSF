@@ -3,7 +3,7 @@
 """
 Concatenate PCs from all spatiotemporal covariates and temporal covariates
 to construct the pandas dataframe for final Covariates
-used to train XGBoost, Lasso, Encoder-Decoder, etc. 
+used to train XGBoost, Lasso, Encoder-Decoder, etc.
 """
 
 
