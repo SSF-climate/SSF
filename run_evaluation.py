@@ -1,3 +1,4 @@
+# compute the spatial/temporal cosine similarity and relative r2 for each model
 import os
 import cfg_target
 import pickle
@@ -21,5 +22,7 @@ for model_name in model_names:
     elif model_name in ['XGBoost', 'Lasso', 'FNN', 'CNN_FNN', 'CNN_LSTM']:
         result_train, result_test = evaluation.eval_forecast(model_name, rootpath, test_years, month_range, False)
     result_all[model_name] = {'train': result_train, 'test': result_test}
+    # to see the stats of the results, use evaluation.print_eval_stats()
+    # e.g. evaluation.print_eval_stats(result_test['spatial_cos'])
 
 save_results(rootpath + 'forecast_results/result_all.pkl', result_all)

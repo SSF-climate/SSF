@@ -4,7 +4,7 @@ import numpy as np
 path = '../../../../project/banerjee-00/S2S_dataset/data_new/'
 rootpath_cv = 'test/random_cv/'
 forecast_rootpath = 'test/forecast/'
-param_path = '/export/scratch/S2S/random_cv/map/cv_results_test/best_parameter/'
+param_path = 'test/random_cv/cv_results_test/best_parameter/'
 
 
 # target variables
