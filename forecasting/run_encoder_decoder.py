@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+import sys
+import os
+os.chdir(os.path.join(".."))
+sys.path.insert(0, 'SSF/')
 import cfg_target
 import pickle
 from random import randint

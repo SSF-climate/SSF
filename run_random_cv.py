@@ -45,9 +45,9 @@ def best_hyperparameter(val_years, month_range, eval_metrics, model_name, rootpa
 
 
 for model_name in model_names:
-#     for year in val_years:
-#         cmd = "{} {} --year {} --model_name {}".format("python", 'random_cv.py', year, model_name)
-#         print(cmd)
-#         os.system(cmd)
+     for year in val_years:
+         cmd = "{} {} --year {} --model_name {}".format("python", 'hyperparameter_tuning/random_cv.py', year, model_name)
+         print(cmd)
+         os.system(cmd)
     print('find the best hyper parameter for {}'.format(model_name))
     best_hyperparameter(val_years=val_years, month_range=month_range, eval_metrics=metric, model_name=model_name, rootpath=rootpath)

@@ -1,13 +1,17 @@
 import numpy as np
 import pandas as pd
+import sys
+import os
+os.chdir(os.path.join(".."))
+sys.path.insert(0, 'SSF/')
 import cfg_target
+from utils import *
 import pickle
 from random import randint
 from random import seed
 import torch
 import model
 from joblib import Parallel, delayed
-from utils import *
 import argparse
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader

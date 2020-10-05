@@ -2,6 +2,10 @@
 # coding: utf-8
 
 # need a function for clarify the spatial range
+import os
+import sys
+os.chdir(os.path.join(".."))
+sys.path.insert(0, 'SSF/')
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
@@ -14,12 +18,8 @@ import math
 import pickle
 from random import randint
 from random import seed
-
 import torch
-import os
-
 import model
-# from multitask import *
 import cfg_target
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data import Dataset
@@ -31,17 +31,6 @@ import torch
 import torch.nn as nn
 from utils import *
 
-#
-#def load_results(filename):
-#    with open(filename, 'rb') as f:
-#        data = pickle.load(f, encoding='bytes')
-#    return data
-#
-#
-#def save_results(filename, results):
-#    with open(filename, 'wb') as fh:
-#        pickle.dump(results, fh)
-#
 
 def compute_cosine(a, b):
     return np.dot(a, b) / (np.sqrt(np.dot(a, a)) * np.sqrt(np.dot(b, b)))
