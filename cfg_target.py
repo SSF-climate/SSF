@@ -26,9 +26,9 @@ test_start_date = '2017-01-01'   # Set the end date for training'
 end_date = '2018-12-31'   # Set the end date for whole dataset'
 
 # spatial temporal covariate variables
-covariates_us = ['tmp2m','precip']
-covariates_global = ['hgt500','slp','rhum500'] # spatial-temporal covariates on land.
-covariates_sea =  ['sst'] # spatial-temporal covariates over ocean.
+covariates_us = ['tmp2m', 'sm']
+covariates_global = ['hgt500', 'slp', 'rhum.sig995']  # spatial-temporal covariates on land.
+covariates_sea = ['sst']  # spatial-temporal covariates over ocean.
 pacific_atlantic = True
 
 
