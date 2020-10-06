@@ -17,11 +17,11 @@ rootpath = cfg_target.forecast_rootpath
 
 for model_name in model_names:
     if model_name in ['EncoderFNN_AllSeq_AR_CI', 'EncoderFNN_AllSeq_AR', 'EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']:
-        file_name = 'run_encoder_decoder.py'
+        file_name = 'forecasting/run_encoder_decoder.py'
     elif model_name in ['XGBoost', 'Lasso']:
-        file_name = 'run_non_dl.py'
+        file_name = 'forecasting/run_non_dl.py'
     elif model_name in ['FNN', 'CNN_FNN', 'CNN_LSTM']:
-        file_name = 'run_dl.py'
+        file_name = 'forecasting/run_dl.py'
     for year in test_years:
         for month in month_range:
             cmd = "{} {} --model_name {} --year {} --month {}".format("python", file_name, model_name, year, month)
