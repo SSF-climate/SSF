@@ -1,5 +1,8 @@
 # compute the spatial/temporal cosine similarity and relative r2 for each model
+import sys
 import os
+os.chdir(os.path.join(".."))
+sys.path.insert(0, 'SSF/')
 import cfg_target
 import pickle
 import numpy as np

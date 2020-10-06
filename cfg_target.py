@@ -2,9 +2,9 @@ import numpy as np
 
 ################### Configuration for Data Loading ################################
 path = 'data/'
-rootpath_cv = 'data/random_cv/'
-forecast_rootpath = 'data/forecast/'
-param_path = 'data/random_cv/cv_results_test/best_parameter/'
+rootpath_cv = 'SSF/data/random_cv/'
+forecast_rootpath = 'SSF/data/forecast/'
+param_path = 'SSF/data/random_cv/cv_results_test/best_parameter/'
 
 
 # target variables
@@ -48,7 +48,7 @@ spatial_set = ['elevation']  # spatial variables
 
 # temporal variable
 # add_temporal = True  # flag to indicate adding temporal features: may not need
-temporal_set = ['mei', 'nao', 'nino3', 'nino4', 'nino3.4', 'nino1+2']  # temporal variable(s)
+temporal_set = ['mei', 'nao', 'mjo_phase', 'mjo_amplitude', 'nino3', 'nino4', 'nino3.4', 'nino1+2']  # temporal variable(s)
 
 save_cov = True    # flag to indicate weather to save covariance
 
