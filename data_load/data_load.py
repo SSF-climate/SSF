@@ -8,8 +8,6 @@ import numpy as np
 import pandas as pd
 import sys
 import os
-# os.chdir(os.path.join(".."))
-# sys.path.insert(0, 'S2S_test/')
 
 
 def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
