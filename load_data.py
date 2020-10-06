@@ -2,7 +2,7 @@
 Load a subset of data required by configure file (cfg_target)
 """
 import cfg_target
-from data_load_new import DataLoader
+from data_load import DataLoader
 data = DataLoader(cfg_target)
 
 target = data.data_download_target()
