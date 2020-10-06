@@ -6,6 +6,10 @@ import math
 import timeit
 import numpy as np
 import pandas as pd
+import sys
+import os
+# os.chdir(os.path.join(".."))
+# sys.path.insert(0, 'S2S_test/')
 
 
 def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
@@ -24,7 +28,6 @@ def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
     # idx = pd.IndexSlice
     # date_index=pd.date_range(start=train_date[0],end=train_date[1])
     cov = covariate_set[0]
-    # path_name='../../../../project/banerjee-00/S2S_dataset/data/'
     file_name = path + cov + '.' + str(train_date[0].year) + '.h5'
     cov_file = pd.read_hdf(file_name)
     year = train_date[0].year
@@ -40,7 +43,6 @@ def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
     df = df.rename(columns={df.columns[-1]: cov})
     if len(cov) > 1:
         for cov in covariate_set[1:]:
-            # path_name='../../../../project/banerjee-00/S2S_dataset/data/'
             file_name = path + cov + '.' + str(train_date[0].year) + '.h5'
             cov_temp = pd.read_hdf(file_name)
             # cov_temp = cov_file.to_frame()
@@ -81,11 +83,11 @@ class DataLoader(object):
         self.train_date_start = args.train_start_date
         self.date_end = args.end_date
         self.past_ndays = args.past_ndays
-        self.future_mdays = args.future_mdays
+        # self.future_mdays = args.future_mdays
         self.past_kyears = args.past_kyears
-        self.train_size = args.train_range  # days
-        self.validation_size = args.val_range  # days
-        self.stride = args.stride
+        # self.train_size = args.train_range  # days
+        # self.validation_size = args.val_range  # days
+        # self.stride = args.stride
         self.save_target = args.save_target
         self.save_cov = args.save_cov
         self.shift_days = args.shift_days

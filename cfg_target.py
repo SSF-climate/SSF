@@ -1,7 +1,7 @@
 import numpy as np
 
 ################### Configuration for Data Loading ################################
-path = 'data/'
+path = 'data/'  # need to change to the absolute path of the data files
 rootpath_cv = 'SSF/data/random_cv/'
 forecast_rootpath = 'SSF/data/forecast/'
 param_path = 'SSF/data/random_cv/cv_results_test/best_parameter/'
@@ -84,10 +84,11 @@ test_years = [2017, 2018]
 test_train_range = 5 # number of years in the training set (train-test split)
 
 
-past_ndays = 0   # number of days to aggaregate in the past: t-n,...,t-1'
+past_ndays = 28   # number of days to aggaregate in the past: t-n,...,t-1'
 
 past_kyears = 2  # number of years in the past to aggaregate: t-k,...,t year'
 
+# future_mdays = 0
 
 ################ Configuration for hyper parameter tuning  ######################
 # param_grid for encoder decoder model
