@@ -74,7 +74,7 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             mdl.to(device)
             mdl.fit(train_loader, device)
             state = {'state_dict': mdl.state_dict()}
-            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
             pred_train = mdl.predict(train_X, device)
             pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN':
@@ -96,7 +96,7 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             mdl.to(device)
             mdl.fit(train_loader, device)
             state = {'state_dict': mdl.state_dict()}
-            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
             pred_train = mdl.predict(train_X, device)
             pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN_AllSeq':
@@ -121,7 +121,7 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             mdl.to(device)
             mdl.fit(train_loader, device)
             state = {'state_dict': mdl.state_dict()}
-            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
             pred_train = mdl.predict(train_X, device)
             pred_y = mdl.predict(test_X, device)
         elif model_name == 'EncoderFNN_AllSeq_AR':
@@ -144,7 +144,7 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             mdl.to(device)
             mdl.fit(train_loader, device)
             state = {'state_dict': mdl.state_dict()}
-            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
             pred_train = mdl.predict(train_X, train_y_ar, device)
             pred_y = mdl.predict(test_X, test_y_ar, device)
         elif model_name == 'EncoderFNN_AllSeq_AR_CI':
@@ -168,7 +168,7 @@ def forecast_rep(month_id, year, rootpath, param_path, device, model_name, num_r
             mdl.to(device)
             mdl.fit(train_loader, device)
             state = {'state_dict': mdl.state_dict()}
-            torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+            torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
             pred_train = mdl.predict(train_X, train_y_ar, device)
             pred_y = mdl.predict(test_X, test_y_ar, device)
         results['target_train'] = train_y

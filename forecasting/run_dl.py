@@ -98,7 +98,7 @@ def forecast_dl(month_id, year, rootpath, param_path, device, model_name):
     mdl.to(device)
     mdl.fit(train_loader, device)
     state = {'state_dict': mdl.state_dict()}
-    torch.save(state, rootpath + 'model/{}_{}_{}.t7'.format(model_name, year, month_id))
+    torch.save(state, rootpath + 'models/{}_{}_{}.t7'.format(model_name, year, month_id))
     pred_train = mdl.predict(train_X, device)
     pred_test = mdl.predict(test_X, device)
     results['target_train'] = train_y
