@@ -39,9 +39,7 @@ class CnnFnn(nn.Module):
         self.cnns = nn.ModuleList([nn.Sequential(nn.Conv3d(1, 1, (1, self.kernel_size, self.kernel_size),
                                                            (1, self.stride, self.stride)),
                                                  nn.ReLU(inplace=True)) for i in range(self.num_var)])
-                                                 #nn.MaxPool3d(kernel_size=3,stride=3))for i in range(self.num_var)])
-
-
+                                                 # nn.MaxPool3d(kernel_size=3,stride=3))for i in range(self.num_var)])
 
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -51,16 +49,12 @@ class CnnFnn(nn.Module):
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
 
-
-        self.fnn = ReluNet(input_dim=self.input_dim*4,
+        self.fnn = ReluNet(input_dim=self.input_dim * 4,
                            output_dim=self.output_dim,
                            hidden_dim=self.hidden_dim,
                            num_layers=self.num_layers,
                            num_epochs=self.num_epochs)
 
-
-
-        
     def forward(self, src, device):
         """ Forward function
         """
@@ -69,9 +63,7 @@ class CnnFnn(nn.Module):
 
             input_x = torch.as_tensor(src[i]).float()
             input_x = input_x.to(device)
-
-            
-            x_out = self.cnns[i](input_x).squeeze(axis=1)# squeeze the dimension 1: cnn input dim?
+            x_out = self.cnns[i](input_x).squeeze(axis=1)  # squeeze the dimension 1: cnn input dim?
             x_flat = x_out.view(x_out.shape[0], x_out.shape[1], -1)
             if i == 0:
                 x_append = x_flat
@@ -85,31 +77,26 @@ class CnnFnn(nn.Module):
 
         return output
 
-
     def fit(self, train_loader, device):
         """ Fit function to CNN
         """
 
         optimizer = optim.Adam(self.parameters(), self.learning_rate)
 
-        criterion = torch.nn.MSELoss(reduction='mean') # sum of the error for all element in the batch
+        criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
 
         max_epoch = self.num_epochs
 
-
-        for epoch in range(max_epoch):      
-            
+        for epoch in range(max_epoch):
 
             self.train()
 
             train_epoch_loss = 0
 
-            
-
             for j, (src, trg) in enumerate(train_loader):
 
                 trg = torch.as_tensor(trg).float().to(device)
-                
+
                 train_output = self.forward(src, device)
 
                 loss = criterion(train_output, trg)
@@ -119,10 +106,7 @@ class CnnFnn(nn.Module):
                 loss.backward()
                 optimizer.step()
 
-
                 train_epoch_loss += loss.item()
-
-
 
             print('Epoch: {}/{} Train Loss: {:.4f}'.format(epoch, max_epoch, train_epoch_loss/(j+1)))
 
@@ -132,7 +116,7 @@ class CnnFnn(nn.Module):
         val_trg = torch.as_tensor(val_trg).float().to(device)
 
         optimizer = optim.Adam(self.parameters(), self.learning_rate)
-        
+
         # the mean error of all element in the batch
         criterion = torch.nn.MSELoss(reduction='mean')
         # array to story training-validation history
@@ -140,16 +124,14 @@ class CnnFnn(nn.Module):
 
         max_epoch = self.num_epochs
 
-        for epoch in range(max_epoch):      
-            
+        for epoch in range(max_epoch):
             self.train()
-
-            train_epoch_loss = 0            
+            train_epoch_loss = 0
 
             for j, (src, trg) in enumerate(train_loader):
 
                 trg = torch.as_tensor(trg).float().to(device)
-                
+
                 train_output = self.forward(src, device)
 
                 loss = criterion(train_output, trg)
@@ -158,7 +140,6 @@ class CnnFnn(nn.Module):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-
 
                 train_epoch_loss += loss.item()
 
@@ -174,8 +155,6 @@ class CnnFnn(nn.Module):
 
         return history
 
-
-
     # make prediction
     def predict(self, src, device):
         """ Predict function for trained CNN-FNN model to predict
@@ -185,9 +164,7 @@ class CnnFnn(nn.Module):
         with torch.no_grad():
             output = self.forward(src, device)
 
-        return output.detach().cpu().numpy() 
-
-
+        return output.detach().cpu().numpy()
 
 
 def get_input_dim(X, num_var, stride, kernel_size):
@@ -199,7 +176,7 @@ def get_input_dim(X, num_var, stride, kernel_size):
 
         S = stride
         K = kernel_size
-        
+
         input_dim += (int((W-K)/S)+1)*(int((H-K)/S)+1)
 
     return input_dim

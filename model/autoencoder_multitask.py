@@ -8,19 +8,18 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-
-    #    input_dim is the size/dimensionality of the one-hot vectors that will be input to the encoder. This is equal to the input (source) vocabulary size.
-    #    hid_dim is the dimensionality of the hidden and cell states.
-    #    n_layers is the number of layers in the RNN.
-    #    dropout is the amount of dropout to use. This is a regularization parameter to prevent overfitting. Check out this for more details about dropout.
-    #    input with size  (batch, seq_length, num_feature per seq)
-
-    #    The RNN returns:
-    #    outputs (the top-layer hidden state for each time-step),
-    #    hidden (the final hidden state for each layer, $h_T$, stacked on top of each other)
-    #    cell (the final cell state for each layer, $c_T$, stacked on top of each other).
+    """
+    The class for LSTM encoder
+    """
 
     def __init__(self, input_dim, hidden_dim, num_layers=2, dropout=0.):
+        """ Initilize LSTM encoder
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input to the encoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        dropout: float -- the amount of dropout to use
+        """
         super().__init__()
 
         self.input_dim = input_dim
@@ -30,6 +29,9 @@ class Encoder(nn.Module):
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
 
     def forward(self, src):
+        """
+        Forward function, return hidden and cell
+        """
 
         # src = [batch size, time, dim]
 
@@ -44,16 +46,18 @@ class Encoder(nn.Module):
 
 
 class Encoder_all_seq(nn.Module):
-
-    #    input_dim is the size/dimensionality of the one-hot vectors that will be input to the encoder. This is equal to the input (source) vocabulary size.
-    #    hid_dim is the dimensionality of the hidden and cell states.
-    #    n_layers is the number of layers in the RNN.
-    #    dropout is the amount of dropout to use. This is a regularization parameter to prevent overfitting. Check out this for more details about dropout.
-    #    input with size  (batch, seq_length, num_feature per seq)
-
-    # Output is the output for all steps in the input sequence
+    """
+        The class for LSTM encoder with the final output as the combination of the output for each date
+    """
 
     def __init__(self, input_dim, hidden_dim, num_layers=2, dropout=0.):
+        """ Initilize LSTM encoder
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input to the encoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        dropout: float -- the amount of dropout to use
+        """
         super().__init__()
 
         self.input_dim = input_dim
@@ -63,13 +67,26 @@ class Encoder_all_seq(nn.Module):
         self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
 
     def forward(self, src):
+        """
+        Forward function, return output from all steps in the input sequence
+        """
         #  src = [batch size, time, dim]
         outputs, (hidden, cell) = self.lstm(src)
         return outputs
 
 
 class Decoder(nn.Module):
+    """
+    The class for LSTM decoder
+    """
     def __init__(self, output_dim, hidden_dim, num_layers, dropout):
+        """ Initilize LSTM decoder
+        Args:
+        output_dim: int -- the size/dimensionality of the vectors that will be input to the decoder (output of encoder)
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        dropout: float -- the amount of dropout to use
+        """
         super().__init__()
         self.output_dim = output_dim
         self.hidden_dim = hidden_dim
@@ -79,7 +96,8 @@ class Decoder(nn.Module):
         self.out = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, input, hidden, cell):
-
+        """Forward function
+        """
         # input = [batch size]
         # hidden = [n layers * n directions, batch size, hid dim]
         # cell = [n layers * n directions, batch size, hid dim]
@@ -116,12 +134,19 @@ class Rowwise_mult_layer(nn.Module):
     Rowwise multiply for AR, for each target location, there is one vector of coefficients for the corresponding sequence from history
     '''
     def __init__(self, ar_dim, num_locations):
+        """ Initilize the Rowwise multiplication layer
+        Args:
+        ar_dim: int -- the size/dimensionality of the vectors that will be input layer (the length of "local" historical sequence)
+        num_locations: int -- the number of target locations
+        """
         super().__init__()
         self.ar_dim = ar_dim
         self.num_locations = num_locations
         self.weights = nn.Parameter(torch.zeros(self.num_locations, self.ar_dim))
 
     def forward(self, src):
+        """Forward function
+        """
         return torch.sum(src * self.weights, axis=-1)
 
 # Six models are listed below
@@ -134,8 +159,20 @@ class Rowwise_mult_layer(nn.Module):
 
 
 class EncoderDecoderQuadLoss(nn.Module):
-    # autoencoder model for re-constructor/predictor
+    """The class for an encoder (LSTM)-decoder(LSTM) model with quadratic loss
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, learning_rate=0.01, decoder_len=18, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(LSTM) model with quadratic loss
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        learning_rate: float -- learning learning_rate
+        decoder_len: int -- the sequence lenght of decoder(LSTM)
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -155,6 +192,9 @@ class EncoderDecoderQuadLoss(nn.Module):
             "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, device):
+        """
+        Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -191,7 +231,8 @@ class EncoderDecoderQuadLoss(nn.Module):
         return outputs[:, -1, :]
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         for epoch in range(self.num_epochs):
 
@@ -223,6 +264,8 @@ class EncoderDecoderQuadLoss(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_src = val_src.to(device)
@@ -270,6 +313,8 @@ class EncoderDecoderQuadLoss(nn.Module):
 
     # make prediction
     def predict(self, src, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         src = src.to(device)
@@ -277,8 +322,20 @@ class EncoderDecoderQuadLoss(nn.Module):
 
 
 class EncoderDecoder(nn.Module):
-    # autoencoder model for re-constructor/predictor
+    """The class for an encoder (LSTM)-decoder(LSTM) model with l2 loss
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, learning_rate=0.01, decoder_len=18, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(LSTM) model with l2 loss
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        learning_rate: float -- learning learning_rate
+        decoder_len: int -- the sequence lenght of decoder(LSTM)
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -299,6 +356,8 @@ class EncoderDecoder(nn.Module):
             "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, device):
+        """Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -334,7 +393,8 @@ class EncoderDecoder(nn.Module):
         return outputs[:, -1, :]
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
 
@@ -367,6 +427,8 @@ class EncoderDecoder(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_src = val_src.to(device)
@@ -402,6 +464,8 @@ class EncoderDecoder(nn.Module):
 
     # make prediction
     def predict(self, src, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         src = src.to(device)
@@ -410,8 +474,21 @@ class EncoderDecoder(nn.Module):
 
 
 class EncoderFNN(nn.Module):
-    # autoencoder model for re-constructor/predictor
+    """The class for an encoder (LSTM)-decoder(FNN) model with l2 loss
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, last_layer=True, seq_len=4, learning_rate=0.01, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(FNN) model with l2 loss
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        last_layer: boolean -- if only take the output of the last layer in encoder as the input to decoder
+        seq_len: int -- the length of input sequence
+        learning_rate: float -- learning learning_rate
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -437,6 +514,8 @@ class EncoderFNN(nn.Module):
         #     "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, device):
+        """Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -465,7 +544,8 @@ class EncoderFNN(nn.Module):
         return output
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
         criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
@@ -499,6 +579,8 @@ class EncoderFNN(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_src = val_src.to(device)
@@ -534,6 +616,8 @@ class EncoderFNN(nn.Module):
 
     # make prediction
     def predict(self, src, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         src = src.to(device)
@@ -542,8 +626,21 @@ class EncoderFNN(nn.Module):
 
 
 class EncoderFNN_AllSeq(nn.Module):
-    # autoencoder model for re-constructor/predictor
+    """The class for an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, seq_len=4, linear_dim=100, learning_rate=0.01, dropout=0.1, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        seq_len: int -- the length of input sequence
+        linear_dim: int -- the dimensionality of the decoder FNN
+        learning_rate: float -- learning learning_rate
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -568,6 +665,8 @@ class EncoderFNN_AllSeq(nn.Module):
         #     "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, device):
+        """Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -593,7 +692,8 @@ class EncoderFNN_AllSeq(nn.Module):
         return output
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
         criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
@@ -627,6 +727,8 @@ class EncoderFNN_AllSeq(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_src = val_src.to(device)
@@ -662,6 +764,8 @@ class EncoderFNN_AllSeq(nn.Module):
 
     # make prediction
     def predict(self, src, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         src = src.to(device)
@@ -674,8 +778,23 @@ class EncoderFNN_AllSeq(nn.Module):
 
 
 class EncoderFNN_AllSeq_AR(nn.Module):
-    # autoencoder model for re-constructor/predictor
+    """The class for an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+    plus an Autoregressive module using historical sequence as input
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, seq_len=4, linear_dim=100, learning_rate=0.01, dropout=0.1, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+        plus an Autoregressive module using historical sequence as input
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        seq_len: int -- the length of input sequence for AR module and encoder
+        linear_dim: int -- the dimensionality of the decoder FNN
+        learning_rate: float -- learning learning_rate
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -704,6 +823,8 @@ class EncoderFNN_AllSeq_AR(nn.Module):
         #     "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, target_ar, device):
+        """Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -733,7 +854,8 @@ class EncoderFNN_AllSeq_AR(nn.Module):
         return result.squeeze(2)
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
         max_epoch = self.num_epochs
@@ -766,6 +888,8 @@ class EncoderFNN_AllSeq_AR(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg_ar, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_trg_ar = torch.as_tensor(val_trg_ar).float()
@@ -804,6 +928,8 @@ class EncoderFNN_AllSeq_AR(nn.Module):
 
         # make prediction
     def predict(self, src, target_ar, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         target_ar = torch.as_tensor(target_ar).float()
@@ -813,7 +939,24 @@ class EncoderFNN_AllSeq_AR(nn.Module):
 
 
 class EncoderFNN_AllSeq_AR_CI(nn.Module):
+    """The class for an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+    plus an Autoregressive module using historical sequence and climate indexes (temporal variables) as input
+    """
     def __init__(self, input_dim, output_dim, hidden_dim=10, num_layers=2, seq_len=4, linear_dim=100, ci_dim=8, learning_rate=0.01, dropout=0.1, threshold=0.1, num_epochs=100):
+        """ Initilize an encoder (LSTM)-decoder(FNN) model where the input of the decoder is the output of all steps in input sequence
+        plus an Autoregressive module using historical sequence and climate indexes (temporal variables) as input
+        Args:
+        input_dim: int -- the size/dimensionality of the vectors that will be input for encoder
+        output_dim: int -- the size/dimensionality of the vectors that will be input for decoder
+        hidden_dim: int -- the dimensionality of the hidden and cell states
+        num_layers: int -- the number of layers in the LSTM
+        seq_len: int -- the length of input sequence for AR module and encoder
+        linear_dim: int -- the dimensionality of the decoder FNN
+        ci_dim: int -- the number of climate indexes (the dimensionality of temporal variables)
+        learning_rate: float -- learning learning_rate
+        threshold: float -- the early stopping point (training loss < threshold) for training process
+        num_epochs: int -- the maximum number of training epochs
+        """
         super().__init__()
 
         self.input_dim = input_dim  # batch_size seq_length n_features
@@ -842,6 +985,8 @@ class EncoderFNN_AllSeq_AR_CI(nn.Module):
         #     "Encoder and decoder must have equal number of layers!"
 
     def forward(self, src, target_ar, device):
+        """Forward function
+        """
         # src = [batch size,sent len, src] e.g.[5,10,1]
         # trg = [batch size,sent len, trg] e.g.[5,10,1]
 
@@ -876,7 +1021,8 @@ class EncoderFNN_AllSeq_AR_CI(nn.Module):
         return result.squeeze(2)
 
     def fit(self, train_loader, device):
-
+        """ Fit function for model training
+        """
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         criterion = torch.nn.MSELoss(reduction='mean')  # sum of the error for all element in the batch
         max_epoch = self.num_epochs
@@ -909,6 +1055,8 @@ class EncoderFNN_AllSeq_AR_CI(nn.Module):
                 break
 
     def fit_cv(self, train_loader, val_src, val_trg_ar, val_trg, device):
+        """ Fit function for hyper-parameter tuning
+        """
         val_src = torch.as_tensor(val_src).float()
         val_trg = torch.as_tensor(val_trg).float()
         val_trg_ar = torch.as_tensor(val_trg_ar).float()
@@ -947,6 +1095,8 @@ class EncoderFNN_AllSeq_AR_CI(nn.Module):
 
         # make prediction
     def predict(self, src, target_ar, device):
+        """ Predict function for a trained model to predict
+        """
         self.eval()
         src = torch.as_tensor(src).float()
         target_ar = torch.as_tensor(target_ar).float()
