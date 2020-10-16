@@ -11,7 +11,7 @@ import os
 
 # for multiprocessing
 #from functools import partial
-#from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count
 from joblib import Parallel, delayed
 
 import numpy as np
