@@ -12,7 +12,7 @@ The code is compatible with Python 3.6 and the following packages:
 - pytorch: 1.2.0
 - sklearn: 0.23.1
 - xgboost: 1.0.2
-
+- pytables: 3.5.2
 
 ## Getting started
 1. Clone the repo
