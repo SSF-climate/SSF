@@ -10,7 +10,7 @@ import sys
 import os
 
 
-def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
+def data_augmentation_one_years(train_date, covariate_set, spatial_range, path):
     """Create a dataframe of all variables in covariate_set within the required
     saptial and temporal range (within one year)
 
@@ -557,7 +557,7 @@ class DataLoader(object):
             # covariates_sea is not sorted, add following
             covariates_sea.sort_index(ascending=True, inplace=True)
             if self.pacific_atlantic is True:
-                covariates_sea_pacific, covariates_sea_atlantic = split_pacific_atlantic(self.path, covariates_sea)
+                covariates_sea_pacific, covariates_sea_atlantic = self.split_pacific_atlantic(self.path, covariates_sea)
                 if self.save_cov is True:
                     covariates_sea_pacific.to_hdf(self.path + 'covariates_pacific.h5', key='covariates_pacific', mode='w')
                     covariates_sea_atlantic.to_hdf(self.path + 'covariates_atlantic.h5', key='covariates_atlantic', mode='w')
