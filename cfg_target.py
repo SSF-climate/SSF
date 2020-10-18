@@ -62,8 +62,8 @@ save_cov = True    # flag to indicate weather to save covariance
 # preprocessing
 rootpath_data = absolute_path + 'data/'
 savepath_data = absolute_path + 'data/'
-vars = ['tmp2m', 'sst']
-locations = ['us', 'atlantic']
+vars = ['sst', 'sst', 'sm', 'tmp2m', 'hgt10', 'hgt500', 'slp', 'rhum.sig995']
+locations = ['pacific', 'atlantic', 'us', 'us', 'global', 'global', 'global', 'global']
 
 num_pcs = 10
 
