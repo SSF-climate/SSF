@@ -1,11 +1,12 @@
 import numpy as np
 
 ################### Configuration for Data Loading ################################
-path = 'data/'  # need to change to the absolute path of the data files
-rootpath_cv = 'SSF/data/random_cv/'
-forecast_rootpath = 'SSF/data/forecast/'
-param_path = 'SSF/data/random_cv/cv_results_test/best_parameter/'
-
+path = '/glade/scratch/hexxx/data/'  # need to change to the absolute path of the data files
+path_save = 'SSF/data/'  # need to change to the absolute path to save data_files
+absolute_path = '/SSF/'  # need to change to the absolute path of the code files
+rootpath_cv = absolute_path + 'data/random_cv/'
+forecast_rootpath = absolute_path + 'data/forecast/'
+param_path = absolute_path + 'data/random_cv/cv_results_test/best_parameter/'
 
 # target variables
 target = 'tmp2m'  # target variable: 'tmp2m' or 'precip'
@@ -27,7 +28,7 @@ end_date = '2018-12-31'   # Set the end date for whole dataset'
 
 # spatial temporal covariate variables
 covariates_us = ['tmp2m', 'sm']
-covariates_global = ['hgt500', 'slp', 'rhum.sig995']  # spatial-temporal covariates on land.
+covariates_global = ['hgt10', 'hgt500', 'slp', 'rhum.sig995']  # spatial-temporal covariates on land.
 covariates_sea = ['sst']  # spatial-temporal covariates over ocean.
 pacific_atlantic = True
 
@@ -59,29 +60,29 @@ save_cov = True    # flag to indicate weather to save covariance
 ################### Configuration for Dataset ################################
 
 # preprocessing
-rootpath_data = 'data/'
-savepath_data = 'data/'
+rootpath_data = absolute_path + 'data/'
+savepath_data = absolute_path + 'data/'
 vars = ['tmp2m', 'sst']
 locations = ['us', 'atlantic']
 
 num_pcs = 10
 
 # train-validation split
-data_target_file = 'data/target_multitask_zscore.h5'
-data_cov_file = 'data/covariates_all_pc10_nao_nino.h5'
+data_target_file = 'data/target_tmp2m_multitask_zscore.h5'
+data_cov_file = 'data/covariates_all_pc10.h5'
 target_var = 'tmp2m'
 
-val_years = [2016, 2015, 2014, 2013, 2012] # years to create validation sets
+val_years = [2016, 2015, 2014, 2013, 2012]  # years to create validation sets
 
-val_train_range = 5 # number of years in the training set (train-val split)
+val_train_range = 5  # number of years in the training set (train-val split)
 
-val_range = 28 # number of days to include in the validation set
-val_freq = '7D' # frequency to generate validation date
+val_range = 28  # number of days to include in the validation set
+val_freq = '7D'  # frequency to generate validation date
 
 # train-test split
 test_years = [2017, 2018]
 
-test_train_range = 5 # number of years in the training set (train-test split)
+test_train_range = 5  # number of years in the training set (train-test split)
 
 
 past_ndays = 28   # number of days to aggaregate in the past: t-n,...,t-1'
@@ -132,9 +133,9 @@ param_grid_cnn_fnn = {'kernel_size': [9, 13, 15],
 
 num_random = 30
 
-month_range = list(range(1,13))
-model_names = ['Lasso', 'FNN', 'XGBoost','CNN_FNN', 'CNN_LSTM', 'EncoderFNN_AllSeq_AR_CI',
-               'EncoderFNN_AllSeq_AR','EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
+month_range = list(range(1, 13))
+model_names = ['Lasso', 'FNN', 'XGBoost', 'CNN_FNN', 'CNN_LSTM', 'EncoderFNN_AllSeq_AR_CI',
+               'EncoderFNN_AllSeq_AR', 'EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 # ['EncoderFNN_AllSeq', 'EncoderDecoder', 'EncoderFNN']
 cv_metric = 'cos'
 one_day = True
