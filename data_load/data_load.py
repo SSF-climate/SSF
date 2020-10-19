@@ -10,7 +10,7 @@ import sys
 import os
 
 
-def data_augmentation_one_years(train_date, covariate_set, spatial_range, path):
+def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
     """Create a dataframe of all variables in covariate_set within the required
     saptial and temporal range (within one year)
 
@@ -43,6 +43,8 @@ def data_augmentation_one_years(train_date, covariate_set, spatial_range, path):
         for cov in covariate_set[1:]:
             file_name = path + cov + '.' + str(train_date[0].year) + '.h5'
             cov_temp = pd.read_hdf(file_name)
+            if isinstance(cov_temp, pd.Series) and cov_temp.name == None:
+                cov_temp.name = cov + '.' + str(train_date[0].year)
             # cov_temp = cov_file.to_frame()
             df = df.merge(cov_temp, on=['lat', 'lon', 'start_date'])
             df = df.rename(columns={df.columns[-1]: cov})
@@ -56,7 +58,7 @@ class DataLoader(object):
     """
     def __init__(self, args):
         self.path = args.path
-        self.path_save = args.path_save
+        self.computedpath = args.computedpath
         self.target_variable = args.target
         self.target_lat = args.target_lat
         self.target_lon = args.target_lon
@@ -177,7 +179,7 @@ class DataLoader(object):
         '''
         if resolution == 2:
             # subsample the map with the resolution as 2x2 for target variables
-            spatial_map = pd.read_hdf(path + 'target_map_2.h5')
+            spatial_map = pd.read_hdf(path + 'us_mask.h5')
             return spatial_map
         else:
             print('the spatial map for resolution as {} is not available'.format(resolution))
@@ -387,8 +389,11 @@ class DataLoader(object):
         date_index = pd.date_range(start=start_date, end=end_date)
         date_index = pd.DataFrame(date_index, columns=['start_date'])
         data_temp = data.reset_index()
+        if not ('start_date' in data_temp.columns):
+            data_temp = data_temp.rename(columns={'index':'start_date'})
         data_subset = date_index.merge(data_temp, on=['start_date'])
         return data_subset
+
 
     def get_spatial_subset(self, data, lat_range, lon_range):
         """Get the subset data for each covariate based on the required spatial range
@@ -514,7 +519,7 @@ class DataLoader(object):
             target = self.shift_target(target, self.target_lat, self.target_lon, self.target_variable, self.shift_days, self.forecast_range, self.operation)
 
         if self.save_target is True:
-            target.to_hdf(self.path_save + 'target.h5', key='target', mode='w')
+            target.to_hdf(self.computedpath + 'target.h5', key='target', mode='w')
             print('target data saved')
         return target
 
@@ -524,16 +529,16 @@ class DataLoader(object):
             Covariates_us, covariates_sea, covariates_global: multiindex DataFrames of spatial covariates over us mainland, ocean, and global range
             Spatial_covariates, temporal_covariates: DataFrames with spatial and temporal variables
         '''
-        # add past years and days to the dataset
+#         # add past years and days to the dataset
         train_date_start, target_end_date = self.date_adapt(self.train_date_start, self.date_end, self.past_kyears, self.past_ndays)
-        # get spatial-temporal covariates on land
+#         # get spatial-temporal covariates on land
         print('load data for us continent')
         tic = timeit.default_timer()
         if len(self.covariate_set_us) > 0:
             us_land_spatial_range = self.remove_masked_data('us', self.lat_range_us, self.lon_range_us, self.path)
             covariates_us = self.get_covariates_data_parallel_updated(train_date_start, target_end_date, self.covariate_set_us, us_land_spatial_range, self.path)
             if self.save_cov is True:
-                covariates_us.to_hdf(self.path_save + 'covariates_us.h5', key='covariates_us', mode='w')
+                covariates_us.to_hdf(self.computedpath + 'covariates_us.h5', key='covariates_us', mode='w')
         else:
             covariates_us = None
         toc = timeit.default_timer()
@@ -544,13 +549,13 @@ class DataLoader(object):
             spatial_range_global = self.remove_masked_data('all', self.lat_range_global, self.lon_range_global, self.path)
             covariates_global = self.get_covariates_data_parallel_updated(train_date_start, target_end_date, self.covariate_set_global, spatial_range_global, self.path)
             if self.save_cov is True:
-                covariates_global.to_hdf(self.path_save + 'covariates_global.h5', key='covariates_global', mode='w')
+                covariates_global.to_hdf(self.computedpath + 'covariates_global.h5', key='covariates_global', mode='w')
         else:
             covariates_global = None
         toc = timeit.default_timer()
         print(toc - tic)
 
-        # get spatial-temporal covariates on sea
+#         # get spatial-temporal covariates on sea
         print('load data for ocean')
         if len(self.ocean_covariate_set) > 0:
             ocean_spatial_range = self.remove_masked_data('ocean', self.lat_range_sea, self.lon_range_sea, self.path)
@@ -560,11 +565,11 @@ class DataLoader(object):
             if self.pacific_atlantic is True:
                 covariates_sea_pacific, covariates_sea_atlantic = self.split_pacific_atlantic(self.path, covariates_sea)
                 if self.save_cov is True:
-                    covariates_sea_pacific.to_hdf(self.path_save + 'covariates_pacific.h5', key='covariates_pacific', mode='w')
-                    covariates_sea_atlantic.to_hdf(self.path_save + 'covariates_atlantic.h5', key='covariates_atlantic', mode='w')
+                    covariates_sea_pacific.to_hdf(self.computedpath + 'covariates_pacific.h5', key='covariates_pacific', mode='w')
+                    covariates_sea_atlantic.to_hdf(self.computedpath + 'covariates_atlantic.h5', key='covariates_atlantic', mode='w')
             else:
                 if self.save_cov is True:
-                    covariates_sea.to_hdf(self.path_save + 'covariates_sea.h5', key='covariates_sea', mode='w')
+                    covariates_sea.to_hdf(self.computedpath + 'covariates_sea.h5', key='covariates_sea', mode='w')
         else:
             covariates_sea = None
 
@@ -575,7 +580,7 @@ class DataLoader(object):
             # spatial_covariates is not multiindexed, add following
             spatial_covariates.set_index(['lat', 'lon'], inplace=True)
             if self.save_cov is True:
-                spatial_covariates.to_hdf(self.path_save + 'spatial_covariates.h5', key='spatial_covariates', mode='w')
+                spatial_covariates.to_hdf(self.computedpath + 'spatial_covariates.h5', key='spatial_covariates', mode='w')
         else:
             spatial_covariates = None
 
@@ -584,7 +589,7 @@ class DataLoader(object):
         if len(self.temporal_set) > 0:
             temporal_covariates = self.create_date_data(self.temporal_set, train_date_start, target_end_date, self.path)
             if self.save_cov is True:
-                temporal_covariates.to_hdf(self.path_save + 'temporal_covariates.h5', key='temporal_covariates', mode='w')
+                temporal_covariates.to_hdf(self.computedpath + 'temporal_covariates.h5', key='temporal_covariates', mode='w')
         else:
             temporal_covariates = None
         return covariates_us, covariates_sea, covariates_global, spatial_covariates, temporal_covariates
