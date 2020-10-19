@@ -23,8 +23,12 @@ def main():
 
     time_index = pd.date_range(train_start_date, end_date, freq='1D')
 
-    target = target.loc[idx[:, :, time_index], :]
-    data = data.loc[idx[time_index], :]
+    existing_dates = [str(t[2]).split(" ")[0] for t in target.index.unique]
+    unique_dates = list(set(existing_dates))
+    
+    target = target.loc[idx[:, :, unique_dates], :]
+
+    data = data.loc[idx[unique_dates], :]
 
 
     cv_path = cfg.rootpath_cv
