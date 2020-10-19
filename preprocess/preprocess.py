@@ -368,7 +368,6 @@ def create_sequence_custom(today, time_frame, covariate_map, past_years=2,
     combine = [today] + [today - pd.DateOffset(days=day) for day in curr_shift_days]
 
 
-
     for k in range(past_years): # go to the past k years
         today = today - pd.DateOffset(years=1)
 
@@ -379,10 +378,12 @@ def create_sequence_custom(today, time_frame, covariate_map, past_years=2,
 
         combine = combine + time_index_next#combine.union(time_index_next)
 
-    combine.reverse()# reverse the sequenc from oldest to newest
-
-    location = time_frame.loc[combine]
-
+    combine.reverse()
+    
+    inter = list(set(time_frame.index) & set(combine))
+    
+    location = time_frame.loc[inter]
+    print(location)
     agg_x = covariate_map[location.values].squeeze()
 
     return agg_x
@@ -541,11 +542,11 @@ def train_val_split_covariate(rootpath,
                                                                                           past_years)
     train_end = train_time_index[-1]
 
-    train_x_norm = data.loc[idx[train_start_shift:train_end], :]
-    test_x_norm = data.loc[idx[test_start_shift:test_end], :]
-
     time_index1 = pd.date_range(train_start_shift, train_end)
     time_index2 = pd.date_range(test_start_shift, test_end)
+
+    train_x_norm = data.loc[time_index1, :]
+    test_x_norm = data.loc[time_index2, :]
 
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
     df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
@@ -723,11 +724,12 @@ def train_test_split_covariate(rootpath,
 
 
 
-    train_x_norm = data.loc[idx[train_start_shift:train_end], :]
-    test_x_norm = data.loc[idx[test_start_shift:test_end], :]
+    time_index1 = pd.date_range(train_start_shift, train_end, freq='7D')
+    time_index2 = pd.date_range(test_start_shift, test_end, freq='7D')
 
-    time_index1 = pd.date_range(train_start_shift, train_end)
-    time_index2 = pd.date_range(test_start_shift, test_end)
+    train_x_norm = data.loc[list(set(data.index) & set(time_index1)), :]
+    test_x_norm = data.loc[list(set(data.index) & set(time_index2)), :]
+    
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)# training index
     df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
 
