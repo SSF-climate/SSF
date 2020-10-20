@@ -103,7 +103,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
             linear_dim = param_grid['linear_dim']
             drop_out = param_grid['drop_out']
     elif model_name == 'XGBoost':
-        if one_day = True:
+        if one_day is True:
             train_X = train_X[:, -1, :]  # one day
             valid_X = valid_X[:, -1, :]  # one day
         train_X = np.reshape(train_X, (train_X.shape[0], -1))
@@ -114,7 +114,7 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         n_estimators = param_grid['n_estimators']
         lr = param_grid['learning_rate']
     elif model_name == 'Lasso':
-        if one_day = True:
+        if one_day is True:
             train_X = train_X[:, -1, :]  # one day
             valid_X = valid_X[:, -1, :]  # one day
         train_X = np.reshape(train_X, (train_X.shape[0], -1))
