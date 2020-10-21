@@ -121,8 +121,9 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
         valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         alphas = param_grid['alpha']
     elif model_name == 'FNN':
-        # train_X = train_X[:,-1,:] # one day
-        # valid_X = valid_X[:,-1,:] # one day
+        if one_day is True:
+            train_X = train_X[:, -1, :]  # one day
+            valid_X = valid_X[:, -1, :]  # one day
         train_X = np.reshape(train_X, (train_X.shape[0], -1))
         valid_X = np.reshape(valid_X, (valid_X.shape[0], -1))
         train_dataset = model.MapDataset(train_X, train_y)
