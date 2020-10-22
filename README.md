@@ -22,6 +22,7 @@ The code is compatible with Python 3.6 and the following packages:
 5. Data loading and preprocessing:
     1. Execute load_data.py to load the subset of data needed in generating forecasts
     2. Execute run_preprocess.py to preprocess covariates and target variable separately
+        1. Alternatively, one can execute run_preprocess_map.py to zscore covariates and convert them to squared maps
     3. Execute create_covariates_pca.py to concatenate data
     4. Execute create_datasets.py to create training-validation sets and training-test sets
 6. Hyperparameter tuning: execute run_random_search.py to find the best parameter by random search
@@ -35,6 +36,7 @@ The code is compatible with Python 3.6 and the following packages:
 - cfg_target.py: configure file with all parameters from users
 - load_data: script for a subset of data required by configure file (cfg_target.py)
 - run_preprocess.py: script for data preprocessing
+- run_preprocess.py: script for preprocessing covariates and converting them to squared maps
 - create_covariates_pca.py: script for concatenating PCs from all climate variables (covariates)
 - create_datasets.py: script for creating training-validation sets and training-test sets
 - run_random_search.py: script for hyperparameter tuning via random search
