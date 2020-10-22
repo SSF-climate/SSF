@@ -36,7 +36,7 @@ The code is compatible with Python 3.6 and the following packages:
 - cfg_target.py: configure file with all parameters from users
 - load_data: script for a subset of data required by configure file (cfg_target.py)
 - run_preprocess.py: script for data preprocessing
-- run_preprocess.py: script for preprocessing covariates and converting them to squared maps
+- run_preprocess_map.py: script for preprocessing covariates and converting them to squared maps
 - create_covariates_pca.py: script for concatenating PCs from all climate variables (covariates)
 - create_datasets.py: script for creating training-validation sets and training-test sets
 - run_random_search.py: script for hyperparameter tuning via random search
