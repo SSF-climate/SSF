@@ -1241,6 +1241,9 @@ def train_val_split_map(rootpath,
         train_x.append(temp_train_x)
         val_x.append(temp_val_x)
 
+        joblib.dump(train_x,rootpath+'train_X_map_{}_forecast{}.pkl'.format(val_year,val_month),protocol=4)
+        joblib.dump(val_x,rootpath+'val_X_map_{}_forecast{}.pkl'.format(val_year,val_month),protocol=4)
+
 
         print(temp_train_x.shape, temp_val_x.shape)
 
@@ -1326,6 +1329,9 @@ def train_test_split_map(rootpath,
         train_x.append(temp_train_x)
         test_x.append(temp_test_x)
 
+
+        joblib.dump(train_x,rootpath+'train_X_map_{}_forecast{}.pkl'.format(test_year,test_month),protocol=4)
+        joblib.dump(test_x,rootpath+'val_X_map_{}_forecast{}.pkl'.format(test_year,test_month),protocol=4)
 
         print(temp_train_x.shape, temp_test_x.shape)
 
