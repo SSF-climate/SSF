@@ -13,8 +13,8 @@ import os
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from joblib import Parallel, delayed
-from sklearn.externals import joblib
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
