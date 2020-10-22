@@ -1166,7 +1166,7 @@ def zscore_spatial_temporal_map(rootpath,
     df_all.sort_index(level=['lat', 'lon'], inplace=True)
 
     if to_save:
-        df_all.to_hdf(rootpath+'{}_{}_multitask_zscore.h5'.format(var_location, var_id), key=var_id, mode='w')
+        df_all.to_hdf(rootpath+'{}_{}_multitask_zscore.h5'.format(var_id,var_location), key=var_id, mode='w')
 
     return df_all
 
