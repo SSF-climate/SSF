@@ -54,7 +54,7 @@ def main():
 
     for year in val_years:
 
-        for num_forecast in range(1, 2):
+        for num_forecast in range(1, 12):
 
      
 
@@ -68,11 +68,23 @@ def main():
                                        test_freq=val_freq,
                                        n_jobs=20)
 
+            preprocess.train_val_split_target_ar(cv_path,
+                                                 target, target_var,
+                                                 year, num_forecast,
+                                                 train_range=val_train_range,
+                                                 past_years=past_years,
+                                                 test_range=val_range,
+                                                 test_freq=val_freq,
+                                                 n_jobs=20)
+
+
+
+
     # to create train-test sets
 
     for year in test_years:
 
-        for num_forecast in range(1, 2):
+        for num_forecast in range(1, 12):
 
             preprocess.train_test_split(forecast_path,
                                         data,
@@ -82,6 +94,15 @@ def main():
                                         train_range=test_train_range,
                                         past_years=past_years,
                                         n_jobs=20)
+
+            preprocess.train_test_split_target_ar(forecast_path,
+                                                  target, target_var,
+                                                  test_time_index_all,
+                                                  year, num_forecast,
+                                                  train_range=test_train_range,
+                                                  past_years=past_years,
+                                                  n_jobs=20)
+
 
 
 
