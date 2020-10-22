@@ -877,7 +877,8 @@ def train_test_split_target_ar(rootpath,
                                target, var_id,
                                test_time_index_all,
                                test_year, test_month,
-                               train_range=24, past_years=2):
+                               train_range=24, past_years=2,
+                               n_jobs=20):
 
     """ Training and test split for target variable to build AR model
 
@@ -906,7 +907,7 @@ def train_test_split_target_ar(rootpath,
     test_start_shift, train_start_shift, train_time_index = get_test_train_index_seasonal(test_start,
                                                                                           test_end,
                                                                                           train_range=train_range,
-                                                                                          past_years=past_years)
+                                                                                          past_years=past_years) 
     train_end = train_time_index[-1]
 
 
@@ -924,17 +925,17 @@ def train_test_split_target_ar(rootpath,
 
     # aggragate data into sequence #
     # multi-index dataframe with lat,lon, start_date
-    time_index1 = train_y_norm.index.get_level_values('start_date')
+    time_index1 = train_y_norm.index.get_level_values('start_date') 
     time_index2 = test_y_norm.index.get_level_values('start_date')
     # training index
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)
     df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
 
 
-    train_y = np.asarray(Parallel(n_jobs=16)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
-                                             for date in train_time_index))
-    test_y = np.asarray(Parallel(n_jobs=16)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
-                                            for date in test_time_index))
+    train_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
+                                                 for date in train_time_index))
+    test_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
+                                                for date in test_time_index)) 
 
     train_y = np.swapaxes(train_y, 1, 2)
     test_y = np.swapaxes(test_y, 1, 2)
@@ -943,6 +944,11 @@ def train_test_split_target_ar(rootpath,
     test_y = test_y[:, :, :-1]
 
     print(train_y.shape, test_y.shape)
+   
+
+    save_results(rootpath, 'train_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), train_y)
+    save_results(rootpath, 'test_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), test_y)
+
 
 
     save_results(rootpath, 'train_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), train_y)
