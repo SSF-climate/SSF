@@ -490,6 +490,100 @@ def train_val_split_target(rootpath,
     save_results(rootpath, 'train_y_pca_{}_forecast{}.pkl'.format(val_year, val_month), train_y)
     save_results(rootpath, 'val_y_pca_{}_forecast{}.pkl'.format(val_year, val_month), test_y)
 
+ 
+
+def train_val_split_target_ar(rootpath,
+                              target, var_id,
+                              val_year, val_month,
+                              train_range=10,
+                              past_years=2,
+                              test_range=28,
+                              test_freq='7D',
+                              n_jobs=16):
+
+    """ Generate Train-validation sets on the target variable tmp2m
+
+    Args:
+            rootpath: str -- the directory to save the results
+            y: multi-index (spatial-temporal) pandas dataframe -- target data used to construct training-validation set
+            var_id: str -- the name of the target variable, e.g., tmp2m and precip
+            val_year,val_month: int -- the year and the month for the validation set
+            train_range: int -- the length (years) to be included in the training set
+            past_years: int -- the length of features in the past to be included
+            test_range: int -- the length (days) used in the validation set
+            test_freq: str -- the frequency to generate dates in the validtion set
+
+
+    """
+
+    
+
+    idx = pd.IndexSlice
+
+    # check the legitimate of the given parameters 
+    if not isinstance(target, pd.DataFrame):
+
+        if isinstance(target,pd.Series):
+            target = target.to_frame() # convert pd.series to pd.dataframe
+        else:
+            raise ValueError("Dataset needs to be a pandas dataframe")
+
+
+    # check dataframe level!
+
+    if len(target.index.names) < 3:
+        raise ValueError("Multiindex dataframe includes 3 levels: [lat,lon,start_date]")
+
+
+
+    # handles the test time indices
+    test_start =pd.Timestamp('{}-{:02d}-01'.format(val_year,val_month),freq='D')
+    test_end = test_start+pd.DateOffset(days=test_range)
+    test_time_index = pd.date_range(test_start,test_end, freq=test_freq) #[test_start,test_end]
+
+    test_start_shift,train_start_shift,train_time_index = get_test_train_index_seasonal(test_start,test_end,train_range,past_years)
+    train_end = train_time_index[-1]
+
+
+    train_time_shift_index = pd.date_range(train_start_shift, train_end)
+    test_time_shift_index = pd.date_range(test_start_shift, test_end)
+
+
+    # you have to have all data here, including the past 2 years data, so use shifted index
+    train_y_norm = target['{}_zscore'.format(var_id)].to_frame().loc[idx[:, :, train_time_shift_index], :]
+    test_y_norm = target['{}_zscore'.format(var_id)].to_frame().loc[idx[:, :, test_time_shift_index], :]
+
+    train_y_norm = train_y_norm.unstack(level=[0, 1])
+    test_y_norm = test_y_norm.unstack(level=[0, 1])
+
+
+    # aggragate data into sequence #
+    # multi-index dataframe with lat,lon, start_date
+    time_index1 = train_y_norm.index.get_level_values('start_date') 
+    time_index2 = test_y_norm.index.get_level_values('start_date')
+    # training index
+    df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)
+    df2 = pd.DataFrame(data={'pos':np.arange(len(time_index2))}, index=time_index2)
+
+
+    train_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
+                                             for date in train_time_index))
+    test_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
+                                            for date in test_time_index)) 
+
+    train_y = np.swapaxes(train_y, 1, 2)
+    test_y = np.swapaxes(test_y, 1, 2)
+
+    train_y = train_y[:, :, :-1]
+    test_y = test_y[:, :, :-1]
+
+    print(train_y.shape, test_y.shape)
+
+    save_results(rootpath, 'train_y_pca_ar_{}_forecast{}.pkl'.format(val_year, val_month), train_y)
+    save_results(rootpath, 'val_y_pca_ar_{}_forecast{}.pkl'.format(val_year, val_month), test_y)
+
+
+    
 
 def train_val_split_covariate(rootpath,
                               data,
