@@ -25,6 +25,7 @@ import pickle
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from joblib import Parallel, delayed
+import joblib
 import argparse
 import torch
 import torch.nn as nn
@@ -54,8 +55,8 @@ def random_cv(cv_index, cv_year, roothpath, param_grid, num_random, model_name, 
     """
     # load data
     if model_name in ['CNN_LSTM', 'CNN_FNN']:
-        train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
-        valid_X = load_results(rootpath + 'val_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        train_X = joblib.load(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
+        valid_X = joblib.load(rootpath + 'val_X_map_{}_forecast{}.pkl'.format(cv_year, cv_index))
         train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
         valid_y = load_results(rootpath + 'val_y_pca_{}_forecast{}.pkl'.format(cv_year, cv_index))
         output_dim = train_y.shape[-1]

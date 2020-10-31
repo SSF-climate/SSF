@@ -12,6 +12,7 @@ from random import seed
 import torch
 import model
 from joblib import Parallel, delayed
+import joblib
 import argparse
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -41,8 +42,8 @@ def forecast_dl(month_id, year, rootpath, param_path, device, model_name):
     results['prediction_train'] = []
     results['prediction_test'] = []
     if model_name in ['CNN_LSTM', 'CNN_FNN']:
-        train_X = load_results(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(year, month_id))
-        test_X = load_results(rootpath + 'test_X_map_{}_forecast{}.pkl'.format(year, month_id))
+        train_X = joblib.load(rootpath + 'train_X_map_{}_forecast{}.pkl'.format(year, month_id))
+        test_X = joblib.load(rootpath + 'test_X_map_{}_forecast{}.pkl'.format(year, month_id))
         train_y = load_results(rootpath + 'train_y_pca_{}_forecast{}.pkl'.format(year, month_id))
         test_y = load_results(rootpath + 'test_y_pca_{}_forecast{}.pkl'.format(year, month_id))
         output_dim = train_y.shape[-1]
