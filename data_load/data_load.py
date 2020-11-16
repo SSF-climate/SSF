@@ -10,7 +10,7 @@ import sys
 import os
 
 
-def data_augmentation_one_years(train_date, covariate_set, spatial_range, path):
+def data_augmentation_one_year(train_date, covariate_set, spatial_range, path):
     """Create a dataframe of all variables in covariate_set within the required
     saptial and temporal range (within one year)
 
