@@ -27,7 +27,7 @@ test_start = pd.Timestamp(cfg.test_start_date)
 test_end = pd.Timestamp(cfg.end_date)
 
 
-target =  pd.read_hdf(rootpath+filename)
+target = pd.read_hdf(rootpath + filename)
 target_id = cfg.target
 date_id = 'start_date'
 
@@ -37,17 +37,3 @@ preprocess.zscore_spatial_temporal(path_to_save,
                                    train_start=train_start, train_end=train_end,
                                    test_start=test_start, test_end=test_end,
                                    date_id=date_id)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
