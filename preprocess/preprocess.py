@@ -349,7 +349,7 @@ def zscore_spatial_temporal(rootpath,
 ############## train-validation split ##################
 
 def create_sequence_custom(today, time_frame, covariate_map, past_years=2,
-                           curr_shift_days=[7, 14, 18], past_shift_days=[7, 14, 28]):
+                           curr_shift_days=[7, 14, 28], past_shift_days=[7, 14, 28]):
 
     """ Feature aggregation: add features from past dates
 
@@ -490,7 +490,7 @@ def train_val_split_target(rootpath,
     save_results(rootpath, 'train_y_pca_{}_forecast{}.pkl'.format(val_year, val_month), train_y)
     save_results(rootpath, 'val_y_pca_{}_forecast{}.pkl'.format(val_year, val_month), test_y)
 
- 
+
 
 def train_val_split_target_ar(rootpath,
                               target, var_id,
@@ -516,11 +516,11 @@ def train_val_split_target_ar(rootpath,
 
     """
 
-    
+
 
     idx = pd.IndexSlice
 
-    # check the legitimate of the given parameters 
+    # check the legitimate of the given parameters
     if not isinstance(target, pd.DataFrame):
 
         if isinstance(target,pd.Series):
@@ -559,7 +559,7 @@ def train_val_split_target_ar(rootpath,
 
     # aggragate data into sequence #
     # multi-index dataframe with lat,lon, start_date
-    time_index1 = train_y_norm.index.get_level_values('start_date') 
+    time_index1 = train_y_norm.index.get_level_values('start_date')
     time_index2 = test_y_norm.index.get_level_values('start_date')
     # training index
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)
@@ -569,7 +569,7 @@ def train_val_split_target_ar(rootpath,
     train_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
                                              for date in train_time_index))
     test_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
-                                            for date in test_time_index)) 
+                                            for date in test_time_index))
 
     train_y = np.swapaxes(train_y, 1, 2)
     test_y = np.swapaxes(test_y, 1, 2)
@@ -583,7 +583,7 @@ def train_val_split_target_ar(rootpath,
     save_results(rootpath, 'val_y_pca_ar_{}_forecast{}.pkl'.format(val_year, val_month), test_y)
 
 
-    
+
 
 def train_val_split_covariate(rootpath,
                               data,
@@ -907,7 +907,7 @@ def train_test_split_target_ar(rootpath,
     test_start_shift, train_start_shift, train_time_index = get_test_train_index_seasonal(test_start,
                                                                                           test_end,
                                                                                           train_range=train_range,
-                                                                                          past_years=past_years) 
+                                                                                          past_years=past_years)
     train_end = train_time_index[-1]
 
 
@@ -925,7 +925,7 @@ def train_test_split_target_ar(rootpath,
 
     # aggragate data into sequence #
     # multi-index dataframe with lat,lon, start_date
-    time_index1 = train_y_norm.index.get_level_values('start_date') 
+    time_index1 = train_y_norm.index.get_level_values('start_date')
     time_index2 = test_y_norm.index.get_level_values('start_date')
     # training index
     df1 = pd.DataFrame(data={'pos':np.arange(len(time_index1))}, index=time_index1)
@@ -935,7 +935,7 @@ def train_test_split_target_ar(rootpath,
     train_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df1['pos'], train_y_norm.values, 2, [28, 42, 56, 70])
                                                  for date in train_time_index))
     test_y = np.asarray(Parallel(n_jobs=n_jobs)(delayed(create_sequence_custom)(date, df2['pos'], test_y_norm.values, 2, [28, 42, 56, 70])
-                                                for date in test_time_index)) 
+                                                for date in test_time_index))
 
     train_y = np.swapaxes(train_y, 1, 2)
     test_y = np.swapaxes(test_y, 1, 2)
@@ -944,7 +944,7 @@ def train_test_split_target_ar(rootpath,
     test_y = test_y[:, :, :-1]
 
     print(train_y.shape, test_y.shape)
-   
+
 
     save_results(rootpath, 'train_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), train_y)
     save_results(rootpath, 'test_y_pca_ar_{}_forecast{}.pkl'.format(test_year, test_month), test_y)
