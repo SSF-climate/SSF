@@ -54,7 +54,7 @@ def main():
 
     for year in val_years:
 
-        for num_forecast in range(1, 12):
+        for num_forecast in cfg.month_range:
 
      
 
@@ -84,7 +84,7 @@ def main():
 
     for year in test_years:
 
-        for num_forecast in range(1, 12):
+        for num_forecast in cfg.month_range:
 
             preprocess.train_test_split(forecast_path,
                                         data,
